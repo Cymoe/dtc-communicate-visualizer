@@ -14,6 +14,7 @@ interface PopupViewerProps {
 export const PopupViewer = ({ brandId, popups, isLoading }: PopupViewerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { toast } = useToast();
+  const [imageError, setImageError] = useState(false);
 
   if (isLoading) {
     return (
@@ -39,10 +40,17 @@ export const PopupViewer = ({ brandId, popups, isLoading }: PopupViewerProps) =>
 
   const handlePrevious = () => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : popups.length - 1));
+    setImageError(false);
   };
 
   const handleNext = () => {
     setCurrentIndex((prev) => (prev < popups.length - 1 ? prev + 1 : 0));
+    setImageError(false);
+  };
+
+  const handleImageError = () => {
+    console.error('Error loading image for popup:', currentPopup);
+    setImageError(true);
   };
 
   return (
@@ -72,19 +80,27 @@ export const PopupViewer = ({ brandId, popups, isLoading }: PopupViewerProps) =>
       </CardHeader>
       <CardContent>
         <div className="w-full rounded-lg overflow-hidden">
-          {currentPopup.image && currentPopup.image.startsWith('data:image') ? (
+          {currentPopup.image && !imageError ? (
             <img 
               src={currentPopup.image} 
               alt="Popup screenshot" 
               className="w-full h-auto rounded-lg shadow-lg"
-              onError={(e) => {
-                console.error('Error loading image:', e);
-                e.currentTarget.src = '/placeholder.svg';
-              }}
+              onError={handleImageError}
             />
           ) : (
             <div className="w-full h-32 flex items-center justify-center bg-gray-100 rounded-lg">
               <span className="text-gray-400">No screenshot available</span>
+            </div>
+          )}
+          {currentPopup.title && (
+            <div className="mt-4 space-y-2">
+              <h3 className="font-semibold">{currentPopup.title}</h3>
+              {currentPopup.description && (
+                <p className="text-sm text-gray-600">{currentPopup.description}</p>
+              )}
+              {currentPopup.cta && (
+                <p className="text-sm font-medium text-blue-600">{currentPopup.cta}</p>
+              )}
             </div>
           )}
         </div>
