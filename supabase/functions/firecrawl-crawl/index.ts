@@ -7,17 +7,52 @@ const corsHeaders = {
   'Access-Control-Max-Age': '86400',
 }
 
+async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
+  try {
+    console.log(`Taking screenshot of ${url}`);
+    
+    const params = new URLSearchParams({
+      access_key: apiKey,
+      url: url,
+      viewport_width: '1280',
+      viewport_height: '720',
+      format: 'jpg',
+      timeout: '30000',
+      block_ads: 'true',
+      block_trackers: 'true',
+      delay: '2000'
+    });
+
+    const screenshotUrl = `https://api.screenshotone.com/take?${params}`;
+    console.log('Requesting screenshot from:', screenshotUrl);
+
+    const response = await fetch(screenshotUrl);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Screenshot API error (${response.status}):`, errorText);
+      throw new Error(`Screenshot API error: ${response.status} - ${errorText}`);
+    }
+
+    return response;
+  } catch (error) {
+    console.error('Screenshot capture failed:', error);
+    throw error;
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { 
       status: 204,
       headers: corsHeaders 
-    })
+    });
   }
 
   try {
-    const { url } = await req.json()
+    const { url } = await req.json();
+    console.log('Received request for URL:', url);
     
     if (!url) {
       console.error('URL is required but was not provided');
@@ -27,7 +62,7 @@ serve(async (req) => {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
-      )
+      );
     }
 
     const apiKey = Deno.env.get('SCREENSHOT_API_KEY');
@@ -39,31 +74,16 @@ serve(async (req) => {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
-      )
+      );
     }
 
-    console.log('Processing screenshot for URL:', url);
-    
-    // Simple screenshot request with minimal parameters
-    const screenshotUrl = `https://api.screenshotone.com/take?access_key=${apiKey}&url=${encodeURIComponent(url)}&viewport_width=1280&viewport_height=720&format=jpg`;
-    
-    console.log('Making request to Screenshot API');
-    
-    const response = await fetch(screenshotUrl);
-    console.log('Screenshot API response status:', response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Screenshot API error:', errorText);
-      throw new Error(`Screenshot API error: ${response.status} - ${errorText}`);
-    }
-
-    const imageBuffer = await response.arrayBuffer();
+    console.log('Starting screenshot capture process');
+    const screenshotResponse = await takeScreenshot(url, apiKey);
+    const imageBuffer = await screenshotResponse.arrayBuffer();
     const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
     
-    console.log('Successfully generated screenshot');
+    console.log('Screenshot captured successfully');
 
-    // Return popup data with the screenshot
     return new Response(
       JSON.stringify({ 
         success: true, 
