@@ -1,15 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import FirecrawlApp from 'npm:@mendable/firecrawl-js'
 import puppeteer from 'npm:puppeteer'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Max-Age': '86400',
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { 
+      status: 204, // Successful preflight
+      headers: corsHeaders 
+    })
   }
 
   try {
@@ -20,18 +25,6 @@ serve(async (req) => {
         JSON.stringify({ success: false, error: 'URL is required' }),
         { 
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
-    }
-
-    const apiKey = Deno.env.get('FIRECRAWL_API_KEY')
-    if (!apiKey) {
-      console.error('FIRECRAWL_API_KEY not found in environment variables')
-      return new Response(
-        JSON.stringify({ success: false, error: 'API key not configured' }),
-        { 
-          status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       )
