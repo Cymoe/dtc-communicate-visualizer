@@ -71,41 +71,18 @@ export const PopupViewer = ({ brandId, popups, isLoading }: PopupViewerProps) =>
         </div>
       </CardHeader>
       <CardContent>
-        <div 
-          className="p-6 rounded-lg"
-          style={{
-            backgroundColor: currentPopup.backgroundColor || '#FFFFFF',
-            color: currentPopup.textColor || '#000000'
-          }}
-        >
-          <div className="space-y-4">
-            <div className="aspect-video relative overflow-hidden rounded-lg">
-              {currentPopup.image ? (
-                <img 
-                  src={currentPopup.image} 
-                  alt={currentPopup.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-                  <span className="text-gray-400">No image available</span>
-                </div>
-              )}
+        <div className="w-full rounded-lg overflow-hidden">
+          {currentPopup.image ? (
+            <img 
+              src={currentPopup.image} 
+              alt="Popup screenshot" 
+              className="w-full rounded-lg shadow-lg"
+            />
+          ) : (
+            <div className="w-full h-32 flex items-center justify-center bg-gray-100 rounded-lg">
+              <span className="text-gray-400">No screenshot available</span>
             </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-semibold">{currentPopup.title}</h3>
-              <p className="text-sm">{currentPopup.description}</p>
-              <Button 
-                className="mt-4"
-                style={{
-                  backgroundColor: currentPopup.textColor || '#000000',
-                  color: currentPopup.backgroundColor || '#FFFFFF'
-                }}
-              >
-                {currentPopup.cta}
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
       </CardContent>
     </Card>
