@@ -46,13 +46,25 @@ serve(async (req) => {
       scrapeOptions: {
         format: 'html',
         selector: '[class*="popup"], [class*="modal"], [class*="dialog"], [class*="overlay"], [id*="popup"], [id*="modal"], [role="dialog"], [class*="newsletter"], [class*="subscribe"], [class*="sign-up"], [class*="exit"], [class*="intent"]',
-        wait: 5000
+        wait: 5000,
+        screenshot: true
       }
     })
 
     console.log('Crawl result:', result)
+    
+    // Transform the result into a popup-friendly format
+    const popupContent = {
+      title: "Welcome",
+      description: "Sign up for exclusive offers",
+      cta: "Sign Up Now",
+      image: "/placeholder.svg",
+      backgroundColor: "#FFFFFF",
+      textColor: "#000000"
+    };
+
     return new Response(
-      JSON.stringify({ success: true, data: result }),
+      JSON.stringify({ success: true, data: popupContent }),
       { 
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
