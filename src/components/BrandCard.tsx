@@ -38,18 +38,20 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         .from('brand_popups')
         .select('popup_content')
         .eq('brand_id', brand.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching popup data:', error);
         throw error;
       }
 
-      const rawData = data as unknown;
-      const typedData = rawData as BrandPopup;
-      
-      console.log('Retrieved popup data:', typedData);
-      return typedData;
+      if (!data) {
+        console.log('No popup data found for brand:', brand.id);
+        return null;
+      }
+
+      console.log('Retrieved popup data:', data);
+      return data as BrandPopup;
     }
   });
 
@@ -99,7 +101,6 @@ const BrandCard = ({ brand }: BrandCardProps) => {
     }
   };
 
-  // Function to handle popup close
   const handleClosePopup = () => {
     setShowPopup(false);
   };
