@@ -42,7 +42,7 @@ serve(async (req) => {
 
     console.log('Making crawl request to Firecrawl API for URL:', url)
     const result = await firecrawl.crawlUrl(url, {
-      limit: 1,
+      limit: 5, // Increased limit to catch more popups
       scrapeOptions: {
         selectors: selectors,
         waitForSelectors: selectors,
@@ -53,11 +53,29 @@ serve(async (req) => {
 
     console.log('Raw crawl result:', result)
 
-    // Extract popup content from the crawled HTML
-    const popupData = await processPopupContent(result.data[0]?.content || '');
+    // Process each found element to extract popup content
+    const popups = await Promise.all(
+      (result.data || []).map(async (item: any) => {
+        const popupData = await processPopupContent(item.content || '');
+        if (popupData) {
+          console.log('Extracted popup:', popupData);
+          return popupData;
+        }
+        return null;
+      })
+    );
+
+    // Filter out null values and duplicates
+    const validPopups = popups.filter((popup): popup is NonNullable<typeof popup> => 
+      popup !== null && 
+      popup.title !== null && 
+      popup.description !== null
+    );
+
+    console.log('Processed popups:', validPopups);
 
     return new Response(
-      JSON.stringify({ success: true, data: popupData }),
+      JSON.stringify({ success: true, data: validPopups }),
       { 
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -86,24 +104,54 @@ serve(async (req) => {
 
 async function processPopupContent(html: string) {
   try {
-    // Basic extraction of popup content
-    const titleMatch = html.match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/i);
-    const descriptionMatch = html.match(/<p[^>]*>(.*?)<\/p>/i);
-    const buttonMatch = html.match(/<button[^>]*>(.*?)<\/button>/i);
-    const imgMatch = html.match(/<img[^>]*src=["']([^"']+)["'][^>]*>/i);
-    
-    // Extract background color from style attributes
-    const bgColorMatch = html.match(/background-color:\s*(#[a-f0-9]{6}|#[a-f0-9]{3}|rgb\([^)]+\))/i);
-    const textColorMatch = html.match(/color:\s*(#[a-f0-9]{6}|#[a-f0-9]{3}|rgb\([^)]+\))/i);
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
 
-    return {
-      title: titleMatch ? titleMatch[1].trim() : null,
-      description: descriptionMatch ? descriptionMatch[1].trim() : null,
-      cta: buttonMatch ? buttonMatch[1].trim() : null,
-      image: imgMatch ? imgMatch[1] : null,
-      backgroundColor: bgColorMatch ? bgColorMatch[1] : "#FFFFFF",
-      textColor: textColorMatch ? textColorMatch[1] : "#000000"
+    // Extract text content
+    const titleElement = doc.querySelector('h1, h2, h3, h4, h5, h6, [class*="title"], [class*="heading"]');
+    const descriptionElement = doc.querySelector('p, [class*="description"], [class*="text"]');
+    const buttonElement = doc.querySelector('button, a.button, .btn, [class*="cta"]');
+    const imageElement = doc.querySelector('img');
+
+    // Extract colors
+    const backgroundColorElement = doc.querySelector('[style*="background"], [class*="bg-"]');
+    const textColorElement = doc.querySelector('[style*="color"]');
+
+    // Get background color from style or compute it
+    let backgroundColor = '#FFFFFF';
+    if (backgroundColorElement) {
+      const style = backgroundColorElement.getAttribute('style');
+      const bgColorMatch = style?.match(/background(?:-color)?:\s*(#[a-f0-9]{6}|#[a-f0-9]{3}|rgb\([^)]+\))/i);
+      if (bgColorMatch) {
+        backgroundColor = bgColorMatch[1];
+      }
+    }
+
+    // Get text color from style or compute it
+    let textColor = '#000000';
+    if (textColorElement) {
+      const style = textColorElement.getAttribute('style');
+      const textColorMatch = style?.match(/color:\s*(#[a-f0-9]{6}|#[a-f0-9]{3}|rgb\([^)]+\))/i);
+      if (textColorMatch) {
+        textColor = textColorMatch[1];
+      }
+    }
+
+    const popup = {
+      title: titleElement?.textContent?.trim() || null,
+      description: descriptionElement?.textContent?.trim() || null,
+      cta: buttonElement?.textContent?.trim() || "Sign Up",
+      image: imageElement?.getAttribute('src') || "/placeholder.svg",
+      backgroundColor,
+      textColor
     };
+
+    // Only return if we have at least a title or description
+    if (popup.title || popup.description) {
+      return popup;
+    }
+
+    return null;
   } catch (error) {
     console.error('Error processing popup content:', error);
     return null;

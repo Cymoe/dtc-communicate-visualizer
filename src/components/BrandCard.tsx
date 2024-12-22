@@ -39,7 +39,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         .from('brand_popups')
         .upsert({
           brand_id: brand.id,
-          popup_content: result.data
+          popup_content: result.data || []
         });
 
       if (upsertError) {
@@ -54,7 +54,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
 
       toast({
         title: "Success",
-        description: "Successfully crawled and saved popup content",
+        description: `Successfully crawled and saved ${result.data?.length || 0} popups`,
       });
     } catch (error) {
       console.error('Error crawling website:', error);

@@ -18,7 +18,7 @@ type CrawlResponse = CrawlStatusResponse | ErrorResponse;
 export class FirecrawlService {
   private static firecrawlApp: any = null;
 
-  static async crawlWebsite(url: string): Promise<{ success: boolean; error?: string; data?: any }> {
+  static async crawlWebsite(url: string): Promise<{ success: boolean; error?: string; data?: any[] }> {
     try {
       console.log('Making crawl request through Edge Function for URL:', url);
       
@@ -69,20 +69,9 @@ export class FirecrawlService {
       }
 
       console.log('Crawl successful:', result);
-      
-      // Process the crawled data to extract popup content
-      const popupContent = {
-        title: result.data.title || "Welcome",
-        description: result.data.description || "Join our newsletter",
-        cta: result.data.cta || "Sign Up",
-        image: result.data.image || "/placeholder.svg",
-        backgroundColor: result.data.backgroundColor || "#FFFFFF",
-        textColor: result.data.textColor || "#000000"
-      };
-
       return { 
         success: true,
-        data: popupContent
+        data: result.data
       };
     } catch (error) {
       console.error('Error during crawl:', error);

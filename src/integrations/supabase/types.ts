@@ -14,21 +14,21 @@ export type Database = {
           brand_id: string
           created_at: string
           id: string
-          popup_content: Json
+          popup_content: Json[]
           updated_at: string
         }
         Insert: {
           brand_id: string
           created_at?: string
           id?: string
-          popup_content: Json
+          popup_content: Json[]
           updated_at?: string
         }
         Update: {
           brand_id?: string
           created_at?: string
           id?: string
-          popup_content?: Json
+          popup_content?: Json[]
           updated_at?: string
         }
         Relationships: []
