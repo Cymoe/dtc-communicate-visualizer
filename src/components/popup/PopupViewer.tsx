@@ -78,11 +78,17 @@ export const PopupViewer = ({ brandId, popups, isLoading }: PopupViewerProps) =>
             color: currentPopup.textColor,
           }}
         >
-          <img 
-            src={currentPopup.image} 
-            alt="Popup visual" 
-            className="w-full h-32 object-contain mb-4"
-          />
+          {currentPopup.image.startsWith('data:image/jpeg;base64,') ? (
+            <img 
+              src={currentPopup.image} 
+              alt="Popup screenshot" 
+              className="w-full rounded-lg shadow-lg mb-4"
+            />
+          ) : (
+            <div className="w-full h-32 flex items-center justify-center bg-gray-100 rounded-lg mb-4">
+              <span className="text-gray-400">No screenshot available</span>
+            </div>
+          )}
           <h4 className="text-xl font-bold mb-2 text-center">
             {currentPopup.title}
           </h4>

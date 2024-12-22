@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import FirecrawlApp from 'npm:@mendable/firecrawl-js'
+import puppeteer from 'npm:puppeteer'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -36,49 +37,97 @@ serve(async (req) => {
       )
     }
 
-    console.log('Initializing Firecrawl with API key')
-    const firecrawl = new FirecrawlApp({ apiKey })
+    console.log('Launching browser to capture popup screenshots')
+    const browser = await puppeteer.launch({ args: ['--no-sandbox'] })
+    const page = await browser.newPage()
+    
+    try {
+      await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 })
+      
+      // Wait for potential popups to appear
+      await page.waitForTimeout(5000)
+      
+      // Look for common popup selectors
+      const popupSelectors = [
+        '[class*="popup"]',
+        '[class*="modal"]',
+        '[class*="overlay"]',
+        '[id*="popup"]',
+        '[id*="modal"]',
+        '[role="dialog"]',
+        '[class*="newsletter"]',
+        '[id*="newsletter"]',
+        '[class*="exit"]',
+        '[class*="intent"]'
+      ]
 
-    console.log('Making crawl request to Firecrawl API for URL:', url)
-    const result = await firecrawl.crawlUrl(url, {
-      limit: 5,
-      scrapeOptions: {
-        formats: ['html'],
-        timeout: 30000
+      const popups = []
+      
+      for (const selector of popupSelectors) {
+        const elements = await page.$$(selector)
+        
+        for (const element of elements) {
+          try {
+            // Get element properties
+            const textContent = await element.evaluate(el => el.textContent)
+            const backgroundColor = await element.evaluate(el => 
+              window.getComputedStyle(el).backgroundColor
+            )
+            const textColor = await element.evaluate(el => 
+              window.getComputedStyle(el).color
+            )
+            
+            // Take screenshot of the popup
+            const screenshot = await element.screenshot({
+              encoding: 'base64',
+              type: 'jpeg',
+              quality: 80
+            })
+
+            // Extract potential CTA button
+            const ctaButton = await element.$('button, a[class*="button"], .btn')
+            const ctaText = ctaButton 
+              ? await ctaButton.evaluate(el => el.textContent?.trim() || 'Click Here')
+              : 'Click Here'
+
+            popups.push({
+              title: textContent?.split('\n')[0]?.trim() || 'Popup',
+              description: textContent?.split('\n').slice(1).join(' ').trim() || 'Sign up for exclusive offers',
+              cta: ctaText,
+              image: `data:image/jpeg;base64,${screenshot}`,
+              backgroundColor: backgroundColor || '#FFFFFF',
+              textColor: textColor || '#000000'
+            })
+          } catch (error) {
+            console.error('Error processing popup element:', error)
+          }
+        }
       }
-    })
 
-    console.log('Raw crawl result:', result)
+      await browser.close()
 
-    // Transform the crawled content into our PopupContent format
-    const transformedPopups = result.data?.map((item: any, index: number) => ({
-      title: `Popup ${index + 1}`,
-      description: "Sign up for exclusive offers",
-      cta: "Sign Up Now",
-      image: "/placeholder.svg",
-      backgroundColor: "#FFFFFF",
-      textColor: "#000000"
-    })) || [];
-
-    // Use default popup if no content was found
-    const defaultPopup = {
-      title: "Welcome",
-      description: "Sign up for exclusive offers",
-      cta: "Sign Up Now",
-      image: "/placeholder.svg",
-      backgroundColor: "#FFFFFF",
-      textColor: "#000000"
-    };
-
-    const popupContent = transformedPopups.length > 0 ? transformedPopups : [defaultPopup];
-
-    return new Response(
-      JSON.stringify({ success: true, data: popupContent }),
-      { 
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      // Use default popup if no content was found
+      const defaultPopup = {
+        title: "Welcome",
+        description: "Sign up for exclusive offers",
+        cta: "Sign Up Now",
+        image: "/placeholder.svg",
+        backgroundColor: "#FFFFFF",
+        textColor: "#000000"
       }
-    )
+
+      const popupContent = popups.length > 0 ? popups : [defaultPopup]
+
+      return new Response(
+        JSON.stringify({ success: true, data: popupContent }),
+        { 
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    } finally {
+      await browser.close()
+    }
   } catch (error) {
     console.error('Error processing request:', error)
     
