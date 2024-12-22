@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,91 +31,90 @@ serve(async (req) => {
       )
     }
 
-    console.log('Making request to Firecrawl API for URL:', url);
+    console.log('Launching browser for URL:', url);
     
-    const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
-    if (!firecrawlApiKey) {
-      console.error('FIRECRAWL_API_KEY is not set in environment variables');
-      throw new Error('FIRECRAWL_API_KEY is not set');
-    }
-
-    console.log('Preparing request to Firecrawl API with configuration...');
-    const response = await fetch('https://api.firecrawl.co/crawl', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${firecrawlApiKey}`
-      },
-      body: JSON.stringify({
-        url,
-        screenshot: true,
-        html: false,
-        selectors: [
-          '[class*="popup"]',
-          '[class*="modal"]',
-          '[class*="overlay"]',
-          '[id*="popup"]',
-          '[id*="modal"]',
-          '[role="dialog"]'
-        ]
-      })
-    });
-
-    console.log('Firecrawl API response status:', response.status);
-    const responseText = await response.text();
-    console.log('Firecrawl API response body:', responseText);
-
-    if (!response.ok) {
-      console.error('Firecrawl API error response:', responseText);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: `Firecrawl API error: ${response.status} - ${responseText}` 
-        }),
-        { 
-          status: response.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    let result;
+    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    const page = await browser.newPage();
+    
     try {
-      result = JSON.parse(responseText);
-    } catch (error) {
-      console.error('Error parsing Firecrawl API response:', error);
+      await page.setViewport({ width: 1280, height: 800 });
+      await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
+      
+      // Wait a bit for popups to appear
+      await page.waitForTimeout(5000);
+      
+      // Look for common popup selectors
+      const popupSelectors = [
+        '[class*="popup"]',
+        '[class*="modal"]',
+        '[class*="overlay"]',
+        '[id*="popup"]',
+        '[id*="modal"]',
+        '[role="dialog"]'
+      ];
+      
+      let popupElement = null;
+      for (const selector of popupSelectors) {
+        const element = await page.$(selector);
+        if (element) {
+          popupElement = element;
+          break;
+        }
+      }
+      
+      if (!popupElement) {
+        console.log('No popup found on page');
+        await browser.close();
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            data: {
+              title: "No Popup Found",
+              description: "No popup was detected on this website",
+              cta: "View Details",
+              image: "/placeholder.svg",
+              backgroundColor: "#FFFFFF",
+              textColor: "#000000"
+            }
+          }),
+          { 
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+      
+      // Take screenshot of the popup
+      const screenshot = await popupElement.screenshot({
+        encoding: 'base64'
+      });
+      
+      await browser.close();
+      
       return new Response(
         JSON.stringify({ 
-          success: false, 
-          error: 'Invalid JSON response from Firecrawl API' 
+          success: true, 
+          data: {
+            title: "Captured Popup",
+            description: "Popup captured from website",
+            cta: "View Details",
+            image: `data:image/png;base64,${screenshot}`,
+            backgroundColor: "#FFFFFF",
+            textColor: "#000000"
+          }
         }),
         { 
-          status: 500,
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
+      
+    } catch (error) {
+      console.error('Error during page processing:', error);
+      await browser.close();
+      throw error;
     }
-
-    console.log('Successfully crawled website:', url);
-
-    // Transform the result to only include screenshot data
-    const transformedData = {
-      title: "Captured Popup",
-      description: "Popup captured from website",
-      cta: "View Details",
-      image: result.screenshot || "/placeholder.svg",
-      backgroundColor: "#FFFFFF",
-      textColor: "#000000"
-    };
-
-    return new Response(
-      JSON.stringify({ success: true, data: transformedData }),
-      { 
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
-
+    
   } catch (error) {
     console.error('Error processing request:', error);
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';

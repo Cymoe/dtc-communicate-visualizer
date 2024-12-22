@@ -18,11 +18,9 @@ interface CrawlStatusResponse {
 type CrawlResponse = CrawlStatusResponse | ErrorResponse;
 
 export class FirecrawlService {
-  private static firecrawlApp: any = null;
-
   static async crawlWebsite(url: string): Promise<{ success: boolean; error?: string; data?: any[] }> {
     try {
-      console.log('Making crawl request through Edge Function for URL:', url);
+      console.log('Making screenshot request for URL:', url);
       
       const response = await fetch('https://vbodnckdrvwjoryqchxa.supabase.co/functions/v1/firecrawl-crawl', {
         method: 'POST',
@@ -34,35 +32,35 @@ export class FirecrawlService {
       });
 
       if (!response.ok) {
-        console.error('Failed to crawl website, status:', response.status);
+        console.error('Failed to capture screenshot, status:', response.status);
         const text = await response.text();
         console.error('Response text:', text);
         return { 
           success: false, 
-          error: `Failed to crawl website: ${response.statusText}` 
+          error: `Failed to capture screenshot: ${response.statusText}` 
         };
       }
 
       const result = await response.json();
       
       if (!result.success) {
-        console.error('Crawl failed:', result.error);
+        console.error('Screenshot capture failed:', result.error);
         return { 
           success: false, 
-          error: result.error || 'Failed to crawl website' 
+          error: result.error || 'Failed to capture screenshot' 
         };
       }
 
-      console.log('Crawl successful:', result);
+      console.log('Screenshot capture successful');
       return { 
         success: true,
         data: [result.data] // Wrap in array since we expect array in components
       };
     } catch (error) {
-      console.error('Error during crawl:', error);
+      console.error('Error during screenshot capture:', error);
       return { 
         success: false, 
-        error: error instanceof Error ? error.message : 'Failed to crawl website' 
+        error: error instanceof Error ? error.message : 'Failed to capture screenshot' 
       };
     }
   }
