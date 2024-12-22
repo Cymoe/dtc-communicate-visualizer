@@ -71,7 +71,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
       if (!result.success) {
         toast({
           title: "Error",
-          description: result.error || "Failed to fetch popup content",
+          description: 'error' in result ? result.error : "Failed to fetch popup content",
           variant: "destructive"
         });
         return;
