@@ -71,41 +71,18 @@ export const PopupViewer = ({ brandId, popups, isLoading }: PopupViewerProps) =>
         </div>
       </CardHeader>
       <CardContent>
-        <div 
-          className="p-6 rounded-lg"
-          style={{
-            backgroundColor: currentPopup.backgroundColor,
-            color: currentPopup.textColor,
-          }}
-        >
-          {currentPopup.image.startsWith('data:image/jpeg;base64,') ? (
+        <div className="p-6 rounded-lg">
+          {currentPopup.image ? (
             <img 
               src={currentPopup.image} 
               alt="Popup screenshot" 
-              className="w-full rounded-lg shadow-lg mb-4"
+              className="w-full rounded-lg shadow-lg"
             />
           ) : (
-            <div className="w-full h-32 flex items-center justify-center bg-gray-100 rounded-lg mb-4">
+            <div className="w-full h-32 flex items-center justify-center bg-gray-100 rounded-lg">
               <span className="text-gray-400">No screenshot available</span>
             </div>
           )}
-          <h4 className="text-xl font-bold mb-2 text-center">
-            {currentPopup.title}
-          </h4>
-          <p className="text-sm mb-4 text-center">
-            {currentPopup.description}
-          </p>
-          <div className="flex justify-center">
-            <Button 
-              className="px-4 py-2 rounded-full text-sm font-semibold transition-transform hover:scale-105"
-              style={{
-                backgroundColor: currentPopup.textColor,
-                color: currentPopup.backgroundColor
-              }}
-            >
-              {currentPopup.cta}
-            </Button>
-          </div>
         </div>
       </CardContent>
     </Card>

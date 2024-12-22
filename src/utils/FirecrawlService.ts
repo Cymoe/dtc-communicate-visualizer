@@ -5,12 +5,14 @@ interface ErrorResponse {
 
 interface CrawlStatusResponse {
   success: true;
-  status: string;
-  completed: number;
-  total: number;
-  creditsUsed: number;
-  expiresAt: string;
-  data: any[];
+  data: {
+    title: string;
+    description: string;
+    cta: string;
+    image: string;
+    backgroundColor: string;
+    textColor: string;
+  };
 }
 
 type CrawlResponse = CrawlStatusResponse | ErrorResponse;
@@ -28,24 +30,7 @@ export class FirecrawlService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZib2RuY2tkcnZ3am9yeXFjaHhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ4NjMwMTEsImV4cCI6MjA1MDQzOTAxMX0.Rco1GbkEHpx4_d6ycu_trmV7nVLtaxIKeO7aQtOQ0YY`
         },
-        body: JSON.stringify({ 
-          url,
-          selectors: [
-            // Common popup selectors
-            '[class*="popup"]',
-            '[class*="modal"]',
-            '[class*="overlay"]',
-            '[id*="popup"]',
-            '[id*="modal"]',
-            '[role="dialog"]',
-            // Newsletter specific selectors
-            '[class*="newsletter"]',
-            '[id*="newsletter"]',
-            // Exit intent popups
-            '[class*="exit"]',
-            '[class*="intent"]'
-          ]
-        })
+        body: JSON.stringify({ url })
       });
 
       if (!response.ok) {
@@ -71,7 +56,7 @@ export class FirecrawlService {
       console.log('Crawl successful:', result);
       return { 
         success: true,
-        data: result.data
+        data: [result.data] // Wrap in array since we expect array in components
       };
     } catch (error) {
       console.error('Error during crawl:', error);

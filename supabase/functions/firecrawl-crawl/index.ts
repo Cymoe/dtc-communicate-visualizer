@@ -8,7 +8,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { 
       status: 204,
@@ -17,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { url, selectors } = await req.json()
+    const { url } = await req.json()
     
     if (!url) {
       return new Response(
@@ -38,31 +37,29 @@ serve(async (req) => {
     }
 
     console.log('Preparing request to Firecrawl API...')
-    const requestBody = JSON.stringify({
-      url,
-      selectors: selectors || [
-        '[class*="popup"]',
-        '[class*="modal"]',
-        '[class*="overlay"]',
-        '[id*="popup"]',
-        '[id*="modal"]',
-        '[role="dialog"]',
-        '[class*="newsletter"]',
-        '[id*="newsletter"]',
-        '[class*="exit"]',
-        '[class*="intent"]'
-      ]
-    })
-
-    console.log('Request body:', requestBody)
-
     const response = await fetch('https://api.firecrawl.co/crawl', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${firecrawlApiKey}`
       },
-      body: requestBody
+      body: JSON.stringify({
+        url,
+        selectors: [
+          '[class*="popup"]',
+          '[class*="modal"]',
+          '[class*="overlay"]',
+          '[id*="popup"]',
+          '[id*="modal"]',
+          '[role="dialog"]',
+          '[class*="newsletter"]',
+          '[id*="newsletter"]',
+          '[class*="exit"]',
+          '[class*="intent"]'
+        ],
+        screenshot: true,
+        html: false
+      })
     })
 
     console.log('Firecrawl API response status:', response.status)
@@ -84,10 +81,19 @@ serve(async (req) => {
 
     const result = await response.json()
     console.log('Successfully crawled website:', url)
-    console.log('Firecrawl API response:', JSON.stringify(result))
+
+    // Transform the result to only include screenshot data
+    const transformedData = {
+      title: "Captured Popup",
+      description: "Popup captured from website",
+      cta: "View Details",
+      image: result.screenshot || "/placeholder.svg",
+      backgroundColor: "#FFFFFF",
+      textColor: "#000000"
+    }
 
     return new Response(
-      JSON.stringify({ success: true, data: result }),
+      JSON.stringify({ success: true, data: transformedData }),
       { 
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
