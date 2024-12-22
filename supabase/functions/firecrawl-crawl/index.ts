@@ -14,6 +14,20 @@ async function takeScreenshot(url: string): Promise<string> {
 
   console.log(`Taking screenshot of ${url}`);
   
+  // Common popup/modal selectors
+  const popupSelectors = [
+    '[role="dialog"]',
+    '.modal',
+    '.popup',
+    '.overlay',
+    '[class*="modal"]',
+    '[class*="popup"]',
+    '[class*="dialog"]',
+    '[id*="modal"]',
+    '[id*="popup"]',
+    '[id*="dialog"]'
+  ].join(',');
+
   const params = new URLSearchParams({
     access_key: apiKey,
     url: url,
@@ -25,6 +39,10 @@ async function takeScreenshot(url: string): Promise<string> {
     delay: '3',
     full_page: 'false',
     timeout: '30',
+    selector: popupSelectors,
+    scroll_to_selector: popupSelectors,
+    extract_selector: popupSelectors,
+    wait_for_selector: popupSelectors,
   });
 
   const screenshotUrl = `https://api.screenshotone.com/take?${params}`;
