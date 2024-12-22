@@ -18,7 +18,7 @@ serve(async (req) => {
   }
 
   try {
-    const { url } = await req.json()
+    const { url, selectors } = await req.json()
     
     if (!url) {
       return new Response(
