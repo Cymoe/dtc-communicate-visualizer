@@ -26,21 +26,23 @@ export const usePopups = (brandId: string) => {
       const { data, error } = await supabase
         .from('brand_popups')
         .select('popup_content')
-        .eq('brand_id', brandId)
-        .single();
+        .eq('brand_id', brandId);
 
       if (error) {
         console.error('Error fetching popups:', error);
         throw error;
       }
 
-      if (!data || !data.popup_content) {
+      if (!data || data.length === 0) {
         console.log('No popups found for brand:', brandId);
         return [];
       }
 
+      // Get the most recent popup_content (assuming it's the last one)
+      const mostRecentPopups = data[data.length - 1].popup_content;
+
       // Ensure popup_content is an array
-      const popupArray = Array.isArray(data.popup_content) ? data.popup_content : [data.popup_content];
+      const popupArray = Array.isArray(mostRecentPopups) ? mostRecentPopups : [mostRecentPopups];
 
       // Validate each popup using the type guard
       const validPopups = popupArray.filter(isPopupContent);
@@ -50,7 +52,7 @@ export const usePopups = (brandId: string) => {
       }
 
       console.log('Retrieved valid popups:', validPopups);
-      return validPopups;
+      return validPopups as PopupContent[];
     }
   });
 };

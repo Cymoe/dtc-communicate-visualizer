@@ -1,4 +1,5 @@
 export interface PopupContent {
+  [key: string]: string;
   title: string;
   description: string;
   cta: string;

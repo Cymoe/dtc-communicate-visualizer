@@ -8,6 +8,7 @@ import { PopupViewer } from "./popup/PopupViewer";
 import { usePopups } from "@/hooks/usePopups";
 import { supabase } from "@/integrations/supabase/client";
 import { PopupContent } from "@/types/popup";
+import { Json } from "@/integrations/supabase/types";
 
 interface BrandCardProps {
   brand: Brand;
@@ -36,7 +37,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
       }
 
       // Ensure the popup content is properly typed
-      const popupContent = (Array.isArray(result.data) ? result.data : [result.data]) as PopupContent[];
+      const popupContent = (Array.isArray(result.data) ? result.data : [result.data]) as unknown as Json[];
 
       console.log('Saving popup content:', popupContent);
 
