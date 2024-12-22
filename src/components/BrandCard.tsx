@@ -1,6 +1,6 @@
 import { Brand } from "@/data/brands";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ExternalLink, Mail, MessageSquare, PopupIcon } from "lucide-react";
+import { ExternalLink, Mail, MessageSquare, LayoutTemplate } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -34,7 +34,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
               <ExternalLink className="w-5 h-5 text-blue-600" />
               <Mail className="w-5 h-5 text-blue-600" />
               <MessageSquare className="w-5 h-5 text-blue-600" />
-              <PopupIcon className="w-5 h-5 text-blue-600" />
+              <LayoutTemplate className="w-5 h-5 text-blue-600" />
             </div>
           </CardContent>
         </Card>
