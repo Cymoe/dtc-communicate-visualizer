@@ -3,8 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': '*',
-  'Access-Control-Max-Age': '86400',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
@@ -36,6 +35,12 @@ async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
   if (!response.ok) {
     const errorText = await response.text();
     console.error(`Screenshot API error (${response.status}):`, errorText);
+    
+    // Check for screenshot limit error in the response
+    if (errorText.includes('screenshots_limit_reached')) {
+      throw new Error('screenshots_limit_reached');
+    }
+    
     throw new Error(`Screenshot API error: ${response.status} - ${errorText}`);
   }
 
@@ -102,8 +107,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error processing request:', error);
     
-    // Check if the error is related to screenshot limits
-    if (error.message?.includes('screenshots_limit_reached')) {
+    if (error.message === 'screenshots_limit_reached') {
       return new Response(
         JSON.stringify({ 
           success: false, 
