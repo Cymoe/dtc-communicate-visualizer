@@ -43,16 +43,14 @@ serve(async (req) => {
     }
 
     console.log('Processing screenshot for URL:', url);
-    console.log('API Key exists:', !!apiKey);
     
-    // Generate a screenshot using screenshotone.com with simplified options
+    // Generate a screenshot using screenshotone.com
     const screenshotUrl = new URL('https://api.screenshotone.com/take');
     screenshotUrl.searchParams.append('access_key', apiKey);
     screenshotUrl.searchParams.append('url', url);
     screenshotUrl.searchParams.append('viewport_width', '1280');
     screenshotUrl.searchParams.append('viewport_height', '720');
     screenshotUrl.searchParams.append('format', 'jpg');
-    screenshotUrl.searchParams.append('block_ads', 'true');
     screenshotUrl.searchParams.append('timeout', '30');
     
     console.log('Making request to Screenshot API:', screenshotUrl.toString());
@@ -72,21 +70,19 @@ serve(async (req) => {
     console.log('Successfully generated screenshot');
 
     // Return popup data with the actual screenshot
-    const mockPopups = [
-      {
-        title: "Website Screenshot",
-        description: "Captured screenshot of the website",
-        cta: "View",
-        image: `data:image/jpeg;base64,${base64Image}`,
-        backgroundColor: "#FFFFFF",
-        textColor: "#000000"
-      }
-    ];
+    const popupData = {
+      title: "Website Screenshot",
+      description: "Captured screenshot of the website",
+      cta: "View",
+      image: `data:image/jpeg;base64,${base64Image}`,
+      backgroundColor: "#FFFFFF",
+      textColor: "#000000"
+    };
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        data: mockPopups
+        data: [popupData]
       }),
       { 
         status: 200,

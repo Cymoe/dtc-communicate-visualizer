@@ -72,11 +72,15 @@ export const PopupViewer = ({ brandId, popups, isLoading }: PopupViewerProps) =>
       </CardHeader>
       <CardContent>
         <div className="w-full rounded-lg overflow-hidden">
-          {currentPopup.image ? (
+          {currentPopup.image && currentPopup.image.startsWith('data:image') ? (
             <img 
               src={currentPopup.image} 
               alt="Popup screenshot" 
-              className="w-full rounded-lg shadow-lg"
+              className="w-full h-auto rounded-lg shadow-lg"
+              onError={(e) => {
+                console.error('Error loading image:', e);
+                e.currentTarget.src = '/placeholder.svg';
+              }}
             />
           ) : (
             <div className="w-full h-32 flex items-center justify-center bg-gray-100 rounded-lg">
