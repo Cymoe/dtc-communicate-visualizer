@@ -2,10 +2,10 @@ import { Brand } from "@/data/brands";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ExternalLink, Mail, MessageSquare, LayoutTemplate } from "lucide-react";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { FirecrawlService } from "@/utils/FirecrawlService";
 
 interface PopupContent {
   title: string;
@@ -28,8 +28,9 @@ const BrandCard = ({ brand }: BrandCardProps) => {
   const { toast } = useToast();
   const [isHovered, setIsHovered] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { data: popupData, isLoading, error } = useQuery({
+  const { data: popupData, isLoading: isLoadingPopup, error } = useQuery({
     queryKey: ['brandPopup', brand.id],
     queryFn: async () => {
       console.log('Fetching popup data for brand:', brand.id);
@@ -52,6 +53,52 @@ const BrandCard = ({ brand }: BrandCardProps) => {
     }
   });
 
+  const handleCardClick = async () => {
+    setIsLoading(true);
+    try {
+      console.log('Crawling website:', brand.website);
+      const result = await FirecrawlService.crawlWebsite(brand.website);
+      
+      if (!result.success) {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to fetch popup content",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Store the crawled popup data in Supabase
+      const { error: upsertError } = await supabase
+        .from('brand_popups')
+        .upsert({
+          brand_id: brand.id,
+          popup_content: result.data
+        });
+
+      if (upsertError) {
+        console.error('Error storing popup data:', upsertError);
+        toast({
+          title: "Error",
+          description: "Failed to save popup content",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setShowPopup(true);
+    } catch (error) {
+      console.error('Error crawling website:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch popup content",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Function to handle popup close
   const handleClosePopup = () => {
     setShowPopup(false);
@@ -63,7 +110,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         className="cursor-pointer transition-all duration-300 hover:shadow-lg"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        onClick={() => setShowPopup(true)}
+        onClick={handleCardClick}
       >
         <CardHeader className="space-y-1">
           <div className="w-full h-32 relative">
@@ -72,6 +119,11 @@ const BrandCard = ({ brand }: BrandCardProps) => {
               alt={brand.name}
               className="w-full h-full object-contain"
             />
+            {isLoading && (
+              <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent>
