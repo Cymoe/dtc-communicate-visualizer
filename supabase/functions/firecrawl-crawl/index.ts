@@ -11,16 +11,50 @@ async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
   try {
     console.log(`Taking screenshot of ${url}`);
     
+    // Add JavaScript to wait for and detect popups
+    const javascript = `
+      new Promise((resolve) => {
+        // Wait for potential popups to appear
+        setTimeout(() => {
+          // Look for common popup selectors
+          const popupSelectors = [
+            '[class*="popup"]',
+            '[class*="modal"]',
+            '[class*="dialog"]',
+            '[id*="popup"]',
+            '[id*="modal"]',
+            '[role="dialog"]',
+            // Common popup libraries
+            '.drift-frame-controller',
+            '.klaviyo-form-version-cid',
+            '#attentive_creative',
+            '.needsclick',
+            // Common overlay classes
+            '[class*="overlay"]',
+            '[class*="lightbox"]'
+          ];
+          
+          const popup = document.querySelector(popupSelectors.join(','));
+          if (popup) {
+            // If popup found, scroll it into view
+            popup.scrollIntoView();
+          }
+          resolve(true);
+        }, 3000); // Wait 3 seconds for popups
+      })
+    `;
+
     const params = new URLSearchParams({
       access_key: apiKey,
       url: url,
       viewport_width: '1280',
       viewport_height: '720',
       format: 'jpg',
-      timeout: '90',  // 90 seconds
+      timeout: '90',
       block_ads: 'true',
       block_trackers: 'true',
-      delay: '30'     // Changed to 30 milliseconds (maximum allowed)
+      delay: '30',
+      javascript: javascript
     });
 
     const screenshotUrl = `https://api.screenshotone.com/take?${params}`;
@@ -88,8 +122,8 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         data: [{
-          title: "Website Screenshot",
-          description: "Captured screenshot of the website",
+          title: "Website Popup",
+          description: "Captured popup from the website",
           cta: "View",
           image: `data:image/jpeg;base64,${base64Image}`,
           backgroundColor: "#FFFFFF",
