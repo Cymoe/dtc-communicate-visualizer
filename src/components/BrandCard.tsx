@@ -16,10 +16,6 @@ interface PopupContent {
   textColor: string;
 }
 
-interface BrandPopup {
-  popup_content: PopupContent;
-}
-
 interface BrandCardProps {
   brand: Brand;
 }
@@ -50,8 +46,23 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         return null;
       }
 
-      // Type assertion to ensure the data matches our expected structure
-      const typedData = data as { popup_content: PopupContent };
+      // First cast to unknown, then to our expected type
+      const rawData = data as unknown;
+      const typedData = rawData as { popup_content: PopupContent };
+      
+      // Validate the structure
+      const content = typedData.popup_content;
+      if (!content || 
+          typeof content.title !== 'string' ||
+          typeof content.description !== 'string' ||
+          typeof content.cta !== 'string' ||
+          typeof content.image !== 'string' ||
+          typeof content.backgroundColor !== 'string' ||
+          typeof content.textColor !== 'string') {
+        console.error('Invalid popup content structure:', content);
+        return null;
+      }
+
       console.log('Retrieved popup data:', typedData);
       return typedData;
     }
@@ -140,7 +151,6 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         </CardContent>
       </Card>
 
-      {/* Brand Website Popup */}
       {showPopup && popupData && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
