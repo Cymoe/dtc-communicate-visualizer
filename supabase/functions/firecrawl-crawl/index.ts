@@ -45,20 +45,16 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         url,
+        screenshot: true,
+        html: false,
         selectors: [
           '[class*="popup"]',
           '[class*="modal"]',
           '[class*="overlay"]',
           '[id*="popup"]',
           '[id*="modal"]',
-          '[role="dialog"]',
-          '[class*="newsletter"]',
-          '[id*="newsletter"]',
-          '[class*="exit"]',
-          '[class*="intent"]'
-        ],
-        screenshot: true,
-        html: false
+          '[role="dialog"]'
+        ]
       })
     })
 
