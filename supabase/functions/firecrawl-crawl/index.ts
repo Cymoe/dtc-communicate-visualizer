@@ -19,14 +19,22 @@ async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
       format: 'jpg',
       block_ads: 'true',
       block_trackers: 'true',
-      delay: '10', // Increased delay to 10 seconds to allow popups to appear
-      full_page: 'true', // Capture full page to ensure we get the popup
+      delay: '3',
+      full_page: 'false', // Changed to false to avoid stack overflow
+      viewport_height: '1500', // Increased viewport height to capture more content
     });
 
     const screenshotUrl = `https://api.screenshotone.com/take?${params}`;
     console.log('Requesting screenshot from:', screenshotUrl);
 
-    const response = await fetch(screenshotUrl);
+    const response = await fetch(screenshotUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'image/jpeg',
+      },
+      // Add timeout to prevent hanging
+      signal: AbortSignal.timeout(15000), // 15 second timeout
+    });
     
     if (!response.ok) {
       const errorText = await response.text();
