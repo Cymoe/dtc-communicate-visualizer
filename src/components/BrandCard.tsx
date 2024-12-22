@@ -34,12 +34,18 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         return;
       }
 
+      // Ensure the popup content is an array
+      const popupContent = Array.isArray(result.data) ? result.data : [result.data];
+
+      console.log('Saving popup content:', popupContent);
+
       // Store the crawled popup data in Supabase
       const { error: upsertError } = await supabase
         .from('brand_popups')
         .upsert({
           brand_id: brand.id,
-          popup_content: result.data || []
+          popup_content: popupContent,
+          updated_at: new Date().toISOString()
         });
 
       if (upsertError) {
@@ -54,7 +60,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
 
       toast({
         title: "Success",
-        description: `Successfully crawled and saved ${result.data?.length || 0} popups`,
+        description: `Successfully crawled and saved ${popupContent.length} popups`,
       });
     } catch (error) {
       console.error('Error crawling website:', error);

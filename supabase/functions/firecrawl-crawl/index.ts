@@ -51,8 +51,21 @@ serve(async (req) => {
 
     console.log('Raw crawl result:', result)
 
+    // Create a default popup if no content is found
+    const defaultPopup = {
+      title: "Welcome",
+      description: "Sign up for exclusive offers",
+      cta: "Sign Up Now",
+      image: "/placeholder.svg",
+      backgroundColor: "#FFFFFF",
+      textColor: "#000000"
+    };
+
+    // Return either the crawled content or the default popup
+    const popupContent = result.data?.length > 0 ? result.data : [defaultPopup];
+
     return new Response(
-      JSON.stringify({ success: true, data: result }),
+      JSON.stringify({ success: true, data: popupContent }),
       { 
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
