@@ -17,10 +17,10 @@ async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
       viewport_width: '1280',
       viewport_height: '720',
       format: 'jpg',
-      timeout: '90',  // Changed from 30000 to 90 (seconds)
+      timeout: '90',  // 90 seconds
       block_ads: 'true',
       block_trackers: 'true',
-      delay: '300'    // Changed from 2000 to 300 (milliseconds)
+      delay: '30'     // Changed to 30 milliseconds (maximum allowed)
     });
 
     const screenshotUrl = `https://api.screenshotone.com/take?${params}`;
