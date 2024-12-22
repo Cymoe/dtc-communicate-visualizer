@@ -128,29 +128,37 @@ const BrandCard = ({ brand }: BrandCardProps) => {
 
             {popupData && (
               <div 
-                className="rounded-lg p-6 shadow-lg"
+                className="relative rounded-lg shadow-2xl overflow-hidden"
                 style={{
                   backgroundColor: popupData.popup_content.backgroundColor,
-                  color: popupData.popup_content.textColor
+                  color: popupData.popup_content.textColor,
+                  maxWidth: '500px',
+                  margin: '0 auto'
                 }}
               >
-                <div className="max-w-md mx-auto">
+                <div className="p-8">
                   <img 
                     src={popupData.popup_content.image} 
                     alt="Popup visual" 
-                    className="w-full h-48 object-contain mb-4"
+                    className="w-full h-48 object-contain mb-6"
                   />
-                  <h4 className="text-2xl font-bold mb-2">
+                  <h4 className="text-3xl font-bold mb-4 text-center">
                     {popupData.popup_content.title}
                   </h4>
-                  <p className="text-lg mb-4">
+                  <p className="text-lg mb-6 text-center leading-relaxed">
                     {popupData.popup_content.description}
                   </p>
-                  <button 
-                    className="px-6 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                  >
-                    {popupData.popup_content.cta}
-                  </button>
+                  <div className="flex justify-center">
+                    <button 
+                      className="px-8 py-3 rounded-full text-lg font-semibold transition-transform hover:scale-105"
+                      style={{
+                        backgroundColor: popupData.popup_content.textColor,
+                        color: popupData.popup_content.backgroundColor
+                      }}
+                    >
+                      {popupData.popup_content.cta}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
