@@ -25,14 +25,16 @@ serve(async (req) => {
     const params = new URLSearchParams({
       url: url,
       access_key: screenshotApiKey,
-      full_page: 'false', // Changed to false to capture viewport only
+      full_page: 'false',
       format: 'jpeg',
-      block_ads: 'true',
-      block_cookie_banners: 'false', // Changed to false since we want to capture popups
-      delay: '8', // Increased delay to ensure popups load
+      block_ads: 'false',
+      block_cookie_banners: 'false',
+      delay: '10',
       viewport_width: '1440',
       viewport_height: '900',
-      response_type: 'base64' // Request base64 response directly
+      response_type: 'base64',
+      wait_for: '.modal,.popup,div[class*="popup"],div[class*="modal"]', // Wait for common popup selectors
+      timeout: '30000' // Increased timeout to ensure popups load
     })
 
     console.log('Making screenshot request to:', `https://api.screenshotone.com/take?${params}`)
@@ -46,7 +48,6 @@ serve(async (req) => {
       throw new Error(`Screenshot API error: ${response.status} - ${errorText}`)
     }
 
-    // Get the base64 image directly from the response
     const base64Image = await response.text()
     console.log('Received base64 image, length:', base64Image.length)
     
