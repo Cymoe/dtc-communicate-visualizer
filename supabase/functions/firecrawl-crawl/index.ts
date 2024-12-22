@@ -33,7 +33,10 @@ serve(async (req) => {
 
     console.log('Launching browser for URL:', url);
     
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    const browser = await puppeteer.launch({ 
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    
     const page = await browser.newPage();
     
     try {
@@ -53,18 +56,21 @@ serve(async (req) => {
         '[role="dialog"]'
       ];
       
-      let popupElement = null;
+      let screenshot = null;
       for (const selector of popupSelectors) {
         const element = await page.$(selector);
         if (element) {
-          popupElement = element;
+          screenshot = await element.screenshot({
+            encoding: 'base64'
+          });
           break;
         }
       }
       
-      if (!popupElement) {
+      await browser.close();
+      
+      if (!screenshot) {
         console.log('No popup found on page');
-        await browser.close();
         return new Response(
           JSON.stringify({ 
             success: true, 
@@ -83,13 +89,6 @@ serve(async (req) => {
           }
         );
       }
-      
-      // Take screenshot of the popup
-      const screenshot = await popupElement.screenshot({
-        encoding: 'base64'
-      });
-      
-      await browser.close();
       
       return new Response(
         JSON.stringify({ 
@@ -117,13 +116,10 @@ serve(async (req) => {
     
   } catch (error) {
     console.error('Error processing request:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Error details:', errorMessage);
-    
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: errorMessage
+        error: error instanceof Error ? error.message : 'Internal server error'
       }),
       { 
         status: 500,
