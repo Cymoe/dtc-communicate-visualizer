@@ -20,14 +20,12 @@ serve(async (req) => {
       throw new Error('Screenshot API key not configured')
     }
 
-    // Simplified API parameters
+    // Simplified API parameters - removed unsupported parameters
     const params = new URLSearchParams({
       url: url,
       access_key: screenshotApiKey,
       full_page: 'true',
       format: 'jpeg',
-      quality: '100',
-      wait_for: '5000', // Wait 5 seconds for content to load
     })
 
     console.log('Making screenshot request with params:', params.toString())
@@ -40,7 +38,8 @@ serve(async (req) => {
     }
 
     const imageBlob = await response.blob()
-    const base64Image = await blobToBase64(imageBlob)
+    const arrayBuffer = await imageBlob.arrayBuffer()
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
 
     return new Response(
       JSON.stringify({
@@ -49,7 +48,7 @@ serve(async (req) => {
           title: 'Website Popup',
           description: 'Captured popup from website',
           cta: 'View Details',
-          image: base64Image,
+          image: `data:image/jpeg;base64,${base64}`,
           backgroundColor: '#ffffff',
           textColor: '#000000'
         }]
@@ -78,10 +77,3 @@ serve(async (req) => {
     )
   }
 })
-
-// Helper function to convert Blob to base64
-async function blobToBase64(blob: Blob): Promise<string> {
-  const buffer = await blob.arrayBuffer()
-  const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)))
-  return `data:image/jpeg;base64,${base64}`
-}
