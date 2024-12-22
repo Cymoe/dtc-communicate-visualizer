@@ -46,19 +46,19 @@ serve(async (req) => {
       scrapeOptions: {
         formats: ['html'],
         timeout: 30000,
-        // Using CSS selectors that target common popup elements
-        cssSelectors: [
-          '[class*="popup"]',
-          '[class*="modal"]',
-          '[class*="overlay"]',
-          '[id*="popup"]',
-          '[id*="modal"]',
-          '[role="dialog"]',
-          '[class*="newsletter"]',
-          '[id*="newsletter"]',
-          '[class*="exit"]',
-          '[class*="intent"]'
-        ]
+        // Using valid selectors for popup elements
+        selector: [
+          'div[class*="popup"]',
+          'div[class*="modal"]',
+          'div[class*="overlay"]',
+          'div[id*="popup"]',
+          'div[id*="modal"]',
+          'div[role="dialog"]',
+          'div[class*="newsletter"]',
+          'div[id*="newsletter"]',
+          'div[class*="exit"]',
+          'div[class*="intent"]'
+        ].join(', ')
       }
     })
 
