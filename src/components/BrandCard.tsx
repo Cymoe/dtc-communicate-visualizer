@@ -7,6 +7,19 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
+interface PopupContent {
+  title: string;
+  description: string;
+  cta: string;
+  image: string;
+  backgroundColor: string;
+  textColor: string;
+}
+
+interface BrandPopup {
+  popup_content: PopupContent;
+}
+
 interface BrandCardProps {
   brand: Brand;
 }
@@ -15,7 +28,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
   const { toast } = useToast();
   const [isHovered, setIsHovered] = useState(false);
 
-  const { data: popupData, isLoading, error } = useQuery({
+  const { data: popupData, isLoading, error } = useQuery<BrandPopup>({
     queryKey: ['brandPopup', brand.id],
     queryFn: async () => {
       console.log('Fetching popup data for brand:', brand.id);
