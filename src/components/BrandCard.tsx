@@ -28,7 +28,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
   const { toast } = useToast();
   const [isHovered, setIsHovered] = useState(false);
 
-  const { data: popupData, isLoading, error } = useQuery<BrandPopup>({
+  const { data: popupData, isLoading, error } = useQuery({
     queryKey: ['brandPopup', brand.id],
     queryFn: async () => {
       console.log('Fetching popup data for brand:', brand.id);
@@ -43,8 +43,10 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         throw error;
       }
 
-      console.log('Retrieved popup data:', data);
-      return data;
+      // Type assertion to ensure the data matches our interface
+      const typedData = data as BrandPopup;
+      console.log('Retrieved popup data:', typedData);
+      return typedData;
     }
   });
 
