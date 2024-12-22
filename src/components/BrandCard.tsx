@@ -7,6 +7,7 @@ import { FirecrawlService } from "@/utils/FirecrawlService";
 import { PopupViewer } from "./popup/PopupViewer";
 import { usePopups } from "@/hooks/usePopups";
 import { supabase } from "@/integrations/supabase/client";
+import { PopupContent } from "@/types/popup";
 
 interface BrandCardProps {
   brand: Brand;
@@ -34,8 +35,8 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         return;
       }
 
-      // Ensure the popup content is an array
-      const popupContent = Array.isArray(result.data) ? result.data : [result.data];
+      // Ensure the popup content is properly typed
+      const popupContent = (Array.isArray(result.data) ? result.data : [result.data]) as PopupContent[];
 
       console.log('Saving popup content:', popupContent);
 

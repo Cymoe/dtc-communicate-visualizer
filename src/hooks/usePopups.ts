@@ -1,6 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PopupContent } from "@/types/popup";
+import { Json } from "@/integrations/supabase/types";
+
+// Type guard to check if a value is a PopupContent
+function isPopupContent(value: Json): value is PopupContent {
+  if (typeof value !== 'object' || value === null) return false;
+  
+  const popup = value as Record<string, unknown>;
+  return (
+    typeof popup.title === 'string' &&
+    typeof popup.description === 'string' &&
+    typeof popup.cta === 'string' &&
+    typeof popup.image === 'string' &&
+    typeof popup.backgroundColor === 'string' &&
+    typeof popup.textColor === 'string'
+  );
+}
 
 export const usePopups = (brandId: string) => {
   return useQuery({
@@ -26,21 +42,12 @@ export const usePopups = (brandId: string) => {
       // Ensure popup_content is an array
       const popupArray = Array.isArray(data.popup_content) ? data.popup_content : [data.popup_content];
 
-      // Validate each popup
-      const validPopups = popupArray.filter((popup): popup is PopupContent => {
-        const isValid = popup &&
-          typeof popup.title === 'string' &&
-          typeof popup.description === 'string' &&
-          typeof popup.cta === 'string' &&
-          typeof popup.image === 'string' &&
-          typeof popup.backgroundColor === 'string' &&
-          typeof popup.textColor === 'string';
+      // Validate each popup using the type guard
+      const validPopups = popupArray.filter(isPopupContent);
 
-        if (!isValid) {
-          console.log('Invalid popup content:', popup);
-        }
-        return isValid;
-      });
+      if (validPopups.length < popupArray.length) {
+        console.log('Some popups were invalid and filtered out');
+      }
 
       console.log('Retrieved valid popups:', validPopups);
       return validPopups;
