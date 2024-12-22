@@ -44,7 +44,27 @@ serve(async (req) => {
     const result = await firecrawl.crawlUrl(url, {
       limit: 100,
       scrapeOptions: {
-        formats: ['html']
+        formats: ['html'],
+        selectors: [
+          // Common popup selectors
+          '[class*="popup"]',
+          '[class*="modal"]',
+          '[class*="dialog"]',
+          '[class*="overlay"]',
+          '[id*="popup"]',
+          '[id*="modal"]',
+          '[role="dialog"]',
+          // Common newsletter/subscription form selectors
+          '[class*="newsletter"]',
+          '[class*="subscribe"]',
+          '[class*="sign-up"]',
+          // Common exit intent popup selectors
+          '[class*="exit"]',
+          '[class*="intent"]'
+        ],
+        // Wait for dynamic content to load
+        waitForSelector: '[class*="popup"], [class*="modal"], [class*="dialog"]',
+        waitTime: 5000 // Wait up to 5 seconds for popups to appear
       }
     })
 
