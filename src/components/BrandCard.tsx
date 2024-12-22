@@ -80,7 +80,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
           </CardContent>
         </Card>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{brand.name}</DialogTitle>
           <DialogDescription>View details and marketing materials for {brand.name}</DialogDescription>
@@ -96,7 +96,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
           
           <section>
             <h3 className="text-lg font-semibold mb-2">SMS Examples</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {brand.smsExamples.map((sms, index) => (
                 <img key={index} src={sms} alt="SMS Example" className="w-full rounded-lg shadow" />
               ))}
@@ -105,7 +105,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
 
           <section>
             <h3 className="text-lg font-semibold mb-2">Email Examples</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {brand.emailExamples.map((email, index) => (
                 <img key={index} src={email} alt="Email Example" className="w-full rounded-lg shadow" />
               ))}
