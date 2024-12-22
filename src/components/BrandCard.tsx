@@ -43,8 +43,10 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         throw error;
       }
 
-      // Type assertion to ensure the data matches our interface
-      const typedData = data as BrandPopup;
+      // First assert as unknown, then as our expected type
+      const rawData = data as unknown;
+      const typedData = rawData as BrandPopup;
+      
       console.log('Retrieved popup data:', typedData);
       return typedData;
     }
