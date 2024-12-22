@@ -25,13 +25,14 @@ serve(async (req) => {
     const params = new URLSearchParams({
       url: url,
       access_key: screenshotApiKey,
-      full_page: 'true',
+      full_page: 'false', // Changed to false to capture viewport only
       format: 'jpeg',
       block_ads: 'true',
-      block_cookie_banners: 'true',
-      delay: '5', // Increased delay to ensure page loads
-      viewport_width: '1280',
-      viewport_height: '800'
+      block_cookie_banners: 'false', // Changed to false since we want to capture popups
+      delay: '8', // Increased delay to ensure popups load
+      viewport_width: '1440',
+      viewport_height: '900',
+      response_type: 'base64' // Request base64 response directly
     })
 
     console.log('Making screenshot request to:', `https://api.screenshotone.com/take?${params}`)
@@ -45,24 +46,20 @@ serve(async (req) => {
       throw new Error(`Screenshot API error: ${response.status} - ${errorText}`)
     }
 
-    const imageBlob = await response.blob()
-    console.log('Received image blob size:', imageBlob.size)
+    // Get the base64 image directly from the response
+    const base64Image = await response.text()
+    console.log('Received base64 image, length:', base64Image.length)
     
-    if (imageBlob.size === 0) {
+    if (!base64Image) {
       throw new Error('Received empty image from Screenshot API')
     }
-
-    const arrayBuffer = await imageBlob.arrayBuffer()
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
-
-    console.log('Successfully generated base64 image, length:', base64.length)
 
     // Extract popup content from the page
     const popupData = {
       title: 'Website Popup',
       description: 'Captured popup from ' + url,
       cta: 'View Details',
-      image: `data:image/jpeg;base64,${base64}`,
+      image: `data:image/jpeg;base64,${base64Image}`,
       backgroundColor: '#ffffff',
       textColor: '#000000'
     }
