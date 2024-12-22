@@ -4,7 +4,7 @@ import puppeteer from 'npm:puppeteer'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': '*',
   'Access-Control-Max-Age': '86400',
 }
 
@@ -12,13 +12,13 @@ serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { 
-      status: 204, // Successful preflight
+      status: 204,
       headers: corsHeaders 
     })
   }
 
   try {
-    const { url, selectors } = await req.json()
+    const { url } = await req.json()
     
     if (!url) {
       return new Response(
@@ -30,7 +30,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('Launching browser to capture popup screenshots')
+    console.log('Launching browser to capture popup screenshots for URL:', url)
     const browser = await puppeteer.launch({ args: ['--no-sandbox'] })
     const page = await browser.newPage()
     
@@ -110,6 +110,7 @@ serve(async (req) => {
       }
 
       const popupContent = popups.length > 0 ? popups : [defaultPopup]
+      console.log('Successfully processed popups:', popupContent.length)
 
       return new Response(
         JSON.stringify({ success: true, data: popupContent }),
@@ -119,7 +120,9 @@ serve(async (req) => {
         }
       )
     } finally {
-      await browser.close()
+      if (browser) {
+        await browser.close()
+      }
     }
   } catch (error) {
     console.error('Error processing request:', error)
