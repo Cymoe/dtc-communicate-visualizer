@@ -45,7 +45,7 @@ serve(async (req) => {
     console.log('Processing screenshot for URL:', url);
     console.log('API Key exists:', !!apiKey);
     
-    // Generate a screenshot using screenshotone.com with additional options
+    // Generate a screenshot using screenshotone.com with simplified options
     const screenshotUrl = new URL('https://api.screenshotone.com/take');
     screenshotUrl.searchParams.append('access_key', apiKey);
     screenshotUrl.searchParams.append('url', url);
@@ -53,8 +53,6 @@ serve(async (req) => {
     screenshotUrl.searchParams.append('viewport_height', '720');
     screenshotUrl.searchParams.append('format', 'jpg');
     screenshotUrl.searchParams.append('block_ads', 'true');
-    screenshotUrl.searchParams.append('block_trackers', 'true');
-    screenshotUrl.searchParams.append('block_social', 'true');
     screenshotUrl.searchParams.append('timeout', '30');
     
     console.log('Making request to Screenshot API:', screenshotUrl.toString());
