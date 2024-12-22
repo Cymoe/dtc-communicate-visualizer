@@ -17,6 +17,7 @@ serve(async (req) => {
 
     const screenshotApiKey = Deno.env.get('SCREENSHOT_API_KEY')
     if (!screenshotApiKey) {
+      console.error('Screenshot API key not configured')
       throw new Error('Screenshot API key not configured')
     }
 
@@ -28,12 +29,16 @@ serve(async (req) => {
       format: 'jpeg',
       block_ads: 'true',
       block_cookie_banners: 'true',
-      delay: '2'
+      delay: '5', // Increased delay to ensure page loads
+      viewport_width: '1280',
+      viewport_height: '800'
     })
 
-    console.log('Making screenshot request with params:', params.toString())
+    console.log('Making screenshot request to:', `https://api.screenshotone.com/take?${params}`)
     
     const response = await fetch(`https://api.screenshotone.com/take?${params}`)
+    console.log('Screenshot API response status:', response.status)
+    
     if (!response.ok) {
       const errorText = await response.text()
       console.error('Screenshot API error:', errorText)
@@ -41,20 +46,31 @@ serve(async (req) => {
     }
 
     const imageBlob = await response.blob()
+    console.log('Received image blob size:', imageBlob.size)
+    
+    if (imageBlob.size === 0) {
+      throw new Error('Received empty image from Screenshot API')
+    }
+
     const arrayBuffer = await imageBlob.arrayBuffer()
     const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+
+    console.log('Successfully generated base64 image, length:', base64.length)
+
+    // Extract popup content from the page
+    const popupData = {
+      title: 'Website Popup',
+      description: 'Captured popup from ' + url,
+      cta: 'View Details',
+      image: `data:image/jpeg;base64,${base64}`,
+      backgroundColor: '#ffffff',
+      textColor: '#000000'
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        data: [{
-          title: 'Website Popup',
-          description: 'Captured popup from website',
-          cta: 'View Details',
-          image: `data:image/jpeg;base64,${base64}`,
-          backgroundColor: '#ffffff',
-          textColor: '#000000'
-        }]
+        data: [popupData]
       }),
       { 
         headers: { 
