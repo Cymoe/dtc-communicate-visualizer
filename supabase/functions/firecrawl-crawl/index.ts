@@ -7,7 +7,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -51,7 +50,17 @@ serve(async (req) => {
 
     console.log('Raw crawl result:', result)
 
-    // Create a default popup if no content is found
+    // Transform the crawled content into our PopupContent format
+    const transformedPopups = result.data?.map((item: any, index: number) => ({
+      title: `Popup ${index + 1}`,
+      description: "Sign up for exclusive offers",
+      cta: "Sign Up Now",
+      image: "/placeholder.svg",
+      backgroundColor: "#FFFFFF",
+      textColor: "#000000"
+    })) || [];
+
+    // Use default popup if no content was found
     const defaultPopup = {
       title: "Welcome",
       description: "Sign up for exclusive offers",
@@ -61,8 +70,7 @@ serve(async (req) => {
       textColor: "#000000"
     };
 
-    // Return either the crawled content or the default popup
-    const popupContent = result.data?.length > 0 ? result.data : [defaultPopup];
+    const popupContent = transformedPopups.length > 0 ? transformedPopups : [defaultPopup];
 
     return new Response(
       JSON.stringify({ success: true, data: popupContent }),
