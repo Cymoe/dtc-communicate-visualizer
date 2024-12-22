@@ -8,58 +8,41 @@ const corsHeaders = {
 }
 
 async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
-  try {
-    console.log(`Taking screenshot of ${url}`);
-    
-    // Simplified parameters with conservative settings
-    const params = new URLSearchParams({
-      access_key: apiKey,
-      url: url,
-      viewport_width: '1280',
-      viewport_height: '720',
-      format: 'jpg',
-      block_ads: 'true',
-      block_trackers: 'true',
-      delay: '3',
-      full_page: 'false',
-      timeout: '30',
-    });
+  console.log(`Taking screenshot of ${url}`);
+  
+  const params = new URLSearchParams({
+    access_key: apiKey,
+    url: url,
+    viewport_width: '1280',
+    viewport_height: '720',
+    format: 'jpg',
+    block_ads: 'true',
+    block_trackers: 'true',
+    delay: '3',
+    full_page: 'false',
+    timeout: '30',
+  });
 
-    const screenshotUrl = `https://api.screenshotone.com/take?${params}`;
-    console.log('Requesting screenshot from:', screenshotUrl);
+  const screenshotUrl = `https://api.screenshotone.com/take?${params}`;
+  console.log('Requesting screenshot from:', screenshotUrl);
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout (slightly less than API timeout)
+  const response = await fetch(screenshotUrl, {
+    method: 'GET',
+    headers: {
+      'Accept': 'image/jpeg',
+    },
+  });
 
-    try {
-      const response = await fetch(screenshotUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'image/jpeg',
-        },
-        signal: controller.signal,
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Screenshot API error (${response.status}):`, errorText);
-        throw new Error(`Screenshot API error: ${response.status} - ${errorText}`);
-      }
-
-      return response;
-    } finally {
-      clearTimeout(timeoutId);
-    }
-  } catch (error) {
-    console.error('Screenshot capture failed:', error);
-    throw error;
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`Screenshot API error (${response.status}):`, errorText);
+    throw new Error(`Screenshot API error: ${response.status} - ${errorText}`);
   }
+
+  return response;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { 
       status: 204,
@@ -72,7 +55,6 @@ serve(async (req) => {
     console.log('Received request for URL:', url);
     
     if (!url) {
-      console.error('URL is required but was not provided');
       return new Response(
         JSON.stringify({ success: false, error: 'URL is required' }),
         { 
@@ -84,7 +66,6 @@ serve(async (req) => {
 
     const apiKey = Deno.env.get('SCREENSHOT_API_KEY');
     if (!apiKey) {
-      console.error('Screenshot API key not found in environment variables');
       return new Response(
         JSON.stringify({ success: false, error: 'API key not configured' }),
         { 
@@ -94,7 +75,6 @@ serve(async (req) => {
       );
     }
 
-    console.log('Starting screenshot capture process');
     const screenshotResponse = await takeScreenshot(url, apiKey);
     const imageBuffer = await screenshotResponse.arrayBuffer();
     const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
@@ -121,6 +101,21 @@ serve(async (req) => {
       
   } catch (error) {
     console.error('Error processing request:', error);
+    
+    // Check if the error is related to screenshot limits
+    if (error.message?.includes('screenshots_limit_reached')) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Screenshot limit reached. Please try again later or contact support to increase your limit.'
+        }),
+        { 
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    
     return new Response(
       JSON.stringify({ 
         success: false, 
