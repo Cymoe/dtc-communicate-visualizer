@@ -1,11 +1,29 @@
 import { useState } from "react";
-import { brands } from "@/data/brands";
 import BrandCard from "@/components/BrandCard";
 import SearchBar from "@/components/SearchBar";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Brand } from "@/data/brands";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   
+  const { data: brands = [], isLoading } = useQuery({
+    queryKey: ['brands'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('brands')
+        .select('*');
+      
+      if (error) {
+        console.error('Error fetching brands:', error);
+        throw error;
+      }
+      
+      return data as Brand[];
+    }
+  });
+
   const filteredBrands = brands.filter(brand =>
     brand.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -22,11 +40,21 @@ const Index = () => {
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredBrands.map(brand => (
-            <BrandCard key={brand.id} brand={brand} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-200 h-64 rounded-lg"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredBrands.map(brand => (
+              <BrandCard key={brand.id} brand={brand} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -31,6 +31,41 @@ export type Database = {
           popup_content?: Json[]
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "brand_popups_new_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brands: {
+        Row: {
+          created_at: string
+          id: string
+          logo: string
+          name: string
+          updated_at: string
+          website: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo: string
+          name: string
+          updated_at?: string
+          website: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo?: string
+          name?: string
+          updated_at?: string
+          website?: string
+        }
         Relationships: []
       }
     }
