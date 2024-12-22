@@ -6,7 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function takeScreenshot(url: string, apiKey: string): Promise<string> {
+async function takeScreenshot(url: string): Promise<string> {
+  const apiKey = Deno.env.get('SCREENSHOT_API_KEY');
+  if (!apiKey) {
+    throw new Error('Screenshot API key not configured');
+  }
+
   console.log(`Taking screenshot of ${url}`);
   
   const params = new URLSearchParams({
@@ -25,26 +30,21 @@ async function takeScreenshot(url: string, apiKey: string): Promise<string> {
   const screenshotUrl = `https://api.screenshotone.com/take?${params}`;
   console.log('Requesting screenshot from:', screenshotUrl);
 
-  try {
-    const response = await fetch(screenshotUrl);
+  const response = await fetch(screenshotUrl);
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`Screenshot API error (${response.status}):`, errorText);
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Screenshot API error (${response.status}):`, errorText);
-      
-      if (errorText.includes('screenshots_limit_reached')) {
-        throw new Error('screenshots_limit_reached');
-      }
-      
-      throw new Error(`Screenshot API error: ${response.status} - ${errorText}`);
+    if (errorText.includes('screenshots_limit_reached')) {
+      throw new Error('screenshots_limit_reached');
     }
-
-    const imageBuffer = await response.arrayBuffer();
-    return btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
-  } catch (error) {
-    console.error('Error in takeScreenshot:', error);
-    throw error;
+    
+    throw new Error(`Screenshot API error: ${response.status} - ${errorText}`);
   }
+
+  const imageBuffer = await response.arrayBuffer();
+  return btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
 }
 
 serve(async (req) => {
@@ -70,18 +70,7 @@ serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get('SCREENSHOT_API_KEY');
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'API key not configured' }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    const base64Image = await takeScreenshot(url, apiKey);
+    const base64Image = await takeScreenshot(url);
     console.log('Screenshot captured successfully');
 
     return new Response(
