@@ -11,38 +11,21 @@ async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
   try {
     console.log(`Taking screenshot of ${url}`);
     
-    // Add JavaScript to wait for and detect popups
-    const javascript = `
-      new Promise((resolve) => {
-        // Wait for potential popups to appear
-        setTimeout(() => {
-          // Look for common popup selectors
-          const popupSelectors = [
-            '[class*="popup"]',
-            '[class*="modal"]',
-            '[class*="dialog"]',
-            '[id*="popup"]',
-            '[id*="modal"]',
-            '[role="dialog"]',
-            // Common popup libraries
-            '.drift-frame-controller',
-            '.klaviyo-form-version-cid',
-            '#attentive_creative',
-            '.needsclick',
-            // Common overlay classes
-            '[class*="overlay"]',
-            '[class*="lightbox"]'
-          ];
-          
-          const popup = document.querySelector(popupSelectors.join(','));
-          if (popup) {
-            // If popup found, scroll it into view
-            popup.scrollIntoView();
-          }
-          resolve(true);
-        }, 3000); // Wait 3 seconds for popups
-      })
-    `;
+    // Common popup selectors to wait for
+    const waitForSelectors = [
+      '[class*="popup"]',
+      '[class*="modal"]',
+      '[class*="dialog"]',
+      '[id*="popup"]',
+      '[id*="modal"]',
+      '[role="dialog"]',
+      '.drift-frame-controller',
+      '.klaviyo-form-version-cid',
+      '#attentive_creative',
+      '.needsclick',
+      '[class*="overlay"]',
+      '[class*="lightbox"]'
+    ].join(',');
 
     const params = new URLSearchParams({
       access_key: apiKey,
@@ -50,11 +33,12 @@ async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
       viewport_width: '1280',
       viewport_height: '720',
       format: 'jpg',
-      timeout: '90',
+      timeout: '30',
       block_ads: 'true',
       block_trackers: 'true',
-      delay: '30',
-      javascript: javascript
+      delay: '5',
+      wait_for: waitForSelectors, // Wait for any popup elements to appear
+      scroll_to: waitForSelectors // Scroll to the popup if found
     });
 
     const screenshotUrl = `https://api.screenshotone.com/take?${params}`;
