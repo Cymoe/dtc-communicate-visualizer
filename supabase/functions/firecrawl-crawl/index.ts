@@ -11,38 +11,48 @@ async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
   try {
     console.log(`Taking screenshot of ${url}`);
     
+    // Simplified parameters to avoid stack overflow
     const params = new URLSearchParams({
       access_key: apiKey,
       url: url,
       viewport_width: '1280',
-      viewport_height: '720',
+      viewport_height: '900',
       format: 'jpg',
       block_ads: 'true',
       block_trackers: 'true',
-      delay: '3',
-      full_page: 'false', // Changed to false to avoid stack overflow
-      viewport_height: '1500', // Increased viewport height to capture more content
+      delay: '5',
+      full_page: 'false',
+      quality: '80', // Reduced quality to improve performance
+      timeout: '15000', // 15 second timeout
     });
 
     const screenshotUrl = `https://api.screenshotone.com/take?${params}`;
     console.log('Requesting screenshot from:', screenshotUrl);
 
-    const response = await fetch(screenshotUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'image/jpeg',
-      },
-      // Add timeout to prevent hanging
-      signal: AbortSignal.timeout(15000), // 15 second timeout
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Screenshot API error (${response.status}):`, errorText);
-      throw new Error(`Screenshot API error: ${response.status} - ${errorText}`);
-    }
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-    return response;
+    try {
+      const response = await fetch(screenshotUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'image/jpeg',
+        },
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Screenshot API error (${response.status}):`, errorText);
+        throw new Error(`Screenshot API error: ${response.status} - ${errorText}`);
+      }
+
+      return response;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   } catch (error) {
     console.error('Screenshot capture failed:', error);
     throw error;
