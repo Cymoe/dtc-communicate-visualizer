@@ -37,7 +37,7 @@ export class FirecrawlService {
         console.error('Response text:', text);
         return { 
           success: false, 
-          error: `Failed to capture screenshot: ${response.statusText}` 
+          error: `Failed to capture screenshot: ${text}` 
         };
       }
 
@@ -54,7 +54,7 @@ export class FirecrawlService {
       console.log('Screenshot capture successful');
       return { 
         success: true,
-        data: result.data // Now expecting an array of popups
+        data: result.data
       };
     } catch (error) {
       console.error('Error during screenshot capture:', error);

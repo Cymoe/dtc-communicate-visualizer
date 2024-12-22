@@ -43,17 +43,35 @@ serve(async (req) => {
     }
 
     console.log('Processing screenshot for URL:', url);
+    console.log('API Key exists:', !!apiKey);
     
-    // Generate a base64 screenshot using screenshotone.com
-    const screenshotUrl = `https://api.screenshotone.com/take?access_key=${apiKey}&url=${encodeURIComponent(url)}&full_page=false&viewport_width=1280&viewport_height=720&format=jpg&block_ads=true&block_trackers=true&block_social=true`;
+    // Generate a screenshot using screenshotone.com with additional options
+    const screenshotUrl = new URL('https://api.screenshotone.com/take');
+    screenshotUrl.searchParams.append('access_key', apiKey);
+    screenshotUrl.searchParams.append('url', url);
+    screenshotUrl.searchParams.append('viewport_width', '1280');
+    screenshotUrl.searchParams.append('viewport_height', '720');
+    screenshotUrl.searchParams.append('format', 'jpg');
+    screenshotUrl.searchParams.append('block_ads', 'true');
+    screenshotUrl.searchParams.append('block_trackers', 'true');
+    screenshotUrl.searchParams.append('block_social', 'true');
+    screenshotUrl.searchParams.append('timeout', '30');
     
-    const response = await fetch(screenshotUrl);
+    console.log('Making request to Screenshot API:', screenshotUrl.toString());
+    
+    const response = await fetch(screenshotUrl.toString());
+    console.log('Screenshot API response status:', response.status);
+    
     if (!response.ok) {
-      throw new Error(`Failed to capture screenshot: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Screenshot API error:', errorText);
+      throw new Error(`Screenshot API error: ${response.status} - ${errorText}`);
     }
 
     const imageBuffer = await response.arrayBuffer();
-    const base64Image = `data:image/jpeg;base64,${btoa(String.fromCharCode(...new Uint8Array(imageBuffer)))}`;
+    const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+    
+    console.log('Successfully generated screenshot');
 
     // Return popup data with the actual screenshot
     const mockPopups = [
@@ -61,7 +79,7 @@ serve(async (req) => {
         title: "Website Screenshot",
         description: "Captured screenshot of the website",
         cta: "View",
-        image: base64Image,
+        image: `data:image/jpeg;base64,${base64Image}`,
         backgroundColor: "#FFFFFF",
         textColor: "#000000"
       }
