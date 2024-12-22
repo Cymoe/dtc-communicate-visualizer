@@ -11,25 +11,25 @@ async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
   try {
     console.log(`Taking screenshot of ${url}`);
     
-    // Parameters adjusted to meet API requirements
+    // Simplified parameters with conservative settings
     const params = new URLSearchParams({
       access_key: apiKey,
       url: url,
       viewport_width: '1280',
-      viewport_height: '900',
+      viewport_height: '720',
       format: 'jpg',
       block_ads: 'true',
       block_trackers: 'true',
-      delay: '5',
+      delay: '3',
       full_page: 'false',
-      timeout: '30', // Reduced to 30 seconds, must be <= 90
+      timeout: '30',
     });
 
     const screenshotUrl = `https://api.screenshotone.com/take?${params}`;
     console.log('Requesting screenshot from:', screenshotUrl);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout (slightly less than API timeout)
 
     try {
       const response = await fetch(screenshotUrl, {
