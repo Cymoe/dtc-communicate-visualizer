@@ -24,6 +24,12 @@ const BrandCard = ({ brand }: BrandCardProps) => {
   
   const { data: popups, isLoading: isLoadingPopups } = usePopups(brand.id);
 
+  console.log('Brand data:', {
+    name: brand.name,
+    logo: brand.logo,
+    logoType: typeof brand.logo
+  });
+
   const savePopupContent = async (popupContent: Json[], retryCount = 0): Promise<boolean> => {
     try {
       const { error: upsertError } = await supabase
@@ -102,8 +108,14 @@ const BrandCard = ({ brand }: BrandCardProps) => {
     }
   };
 
-  const handleImageError = () => {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     console.error(`Failed to load image for brand: ${brand.name}`);
+    console.error('Image error details:', {
+      src: e.currentTarget.src,
+      naturalWidth: e.currentTarget.naturalWidth,
+      naturalHeight: e.currentTarget.naturalHeight,
+      error: e
+    });
     setImageError(true);
   };
 
@@ -124,6 +136,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
                 className="w-full h-full object-contain"
                 onError={handleImageError}
                 loading="lazy"
+                crossOrigin="anonymous"
               />
             ) : (
               <div className="text-gray-400 flex items-center justify-center h-full">
