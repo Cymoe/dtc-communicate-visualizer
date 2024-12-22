@@ -19,7 +19,6 @@ serve(async (req) => {
       throw new Error('Screenshot API key not configured')
     }
 
-    // Enhanced parameters for better popup capture
     const params = new URLSearchParams({
       url: url,
       access_key: screenshotApiKey,
@@ -27,12 +26,11 @@ serve(async (req) => {
       format: 'jpeg',
       block_ads: 'true',
       block_cookie_banners: 'true',
-      delay: '3000',
+      delay: '300',
       viewport_width: '1920',
       viewport_height: '1080',
       response_type: 'json',
-      wait_for: '.modal,.popup,div[class*="popup"],div[class*="modal"],.newsletter-popup,#popup',
-      timeout: '20000'
+      timeout: '90'
     })
 
     console.log('Making screenshot request with params:', params.toString())
@@ -49,12 +47,11 @@ serve(async (req) => {
     const result = await response.json()
     console.log('Screenshot API success, processing result')
 
-    // Create a more detailed popup data object
     const popupData = {
       title: `Popup from ${url}`,
       description: 'Captured popup content',
       cta: 'View Details',
-      image: result.url || result.image, // Handle both URL and base64 responses
+      image: result.url || result.image,
       backgroundColor: '#ffffff',
       textColor: '#000000'
     }
