@@ -44,23 +44,9 @@ serve(async (req) => {
     const result = await firecrawl.crawlUrl(url, {
       limit: 1,
       scrapeOptions: {
-        formats: ['html'],
-        selectors: [
-          '[class*="popup"]',
-          '[class*="modal"]',
-          '[class*="dialog"]',
-          '[class*="overlay"]',
-          '[id*="popup"]',
-          '[id*="modal"]',
-          '[role="dialog"]',
-          '[class*="newsletter"]',
-          '[class*="subscribe"]',
-          '[class*="sign-up"]',
-          '[class*="exit"]',
-          '[class*="intent"]'
-        ],
-        waitForSelector: '[class*="popup"], [class*="modal"], [class*="dialog"]',
-        waitTime: 5000
+        format: 'html',
+        selector: '[class*="popup"], [class*="modal"], [class*="dialog"], [class*="overlay"], [id*="popup"], [id*="modal"], [role="dialog"], [class*="newsletter"], [class*="subscribe"], [class*="sign-up"], [class*="exit"], [class*="intent"]',
+        wait: 5000
       }
     })
 
