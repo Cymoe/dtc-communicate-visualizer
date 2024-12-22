@@ -5,14 +5,14 @@ interface ErrorResponse {
 
 interface CrawlStatusResponse {
   success: true;
-  data: {
+  data: Array<{
     title: string;
     description: string;
     cta: string;
     image: string;
     backgroundColor: string;
     textColor: string;
-  };
+  }>;
 }
 
 type CrawlResponse = CrawlStatusResponse | ErrorResponse;
@@ -54,7 +54,7 @@ export class FirecrawlService {
       console.log('Screenshot capture successful');
       return { 
         success: true,
-        data: [result.data] // Wrap in array since we expect array in components
+        data: result.data // Now expecting an array of popups
       };
     } catch (error) {
       console.error('Error during screenshot capture:', error);
