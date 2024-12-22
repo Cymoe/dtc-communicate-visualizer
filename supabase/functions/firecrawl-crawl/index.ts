@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
+async function takeScreenshot(url: string, apiKey: string): Promise<string> {
   console.log(`Taking screenshot of ${url}`);
   
   const params = new URLSearchParams({
@@ -25,18 +25,12 @@ async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
   const screenshotUrl = `https://api.screenshotone.com/take?${params}`;
   console.log('Requesting screenshot from:', screenshotUrl);
 
-  const response = await fetch(screenshotUrl, {
-    method: 'GET',
-    headers: {
-      'Accept': 'image/jpeg',
-    },
-  });
-
+  const response = await fetch(screenshotUrl);
+  
   if (!response.ok) {
     const errorText = await response.text();
     console.error(`Screenshot API error (${response.status}):`, errorText);
     
-    // Check for screenshot limit error in the response
     if (errorText.includes('screenshots_limit_reached')) {
       throw new Error('screenshots_limit_reached');
     }
@@ -44,10 +38,12 @@ async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
     throw new Error(`Screenshot API error: ${response.status} - ${errorText}`);
   }
 
-  return response;
+  const imageBuffer = await response.arrayBuffer();
+  return btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { 
       status: 204,
@@ -80,10 +76,7 @@ serve(async (req) => {
       );
     }
 
-    const screenshotResponse = await takeScreenshot(url, apiKey);
-    const imageBuffer = await screenshotResponse.arrayBuffer();
-    const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
-    
+    const base64Image = await takeScreenshot(url, apiKey);
     console.log('Screenshot captured successfully');
 
     return new Response(
