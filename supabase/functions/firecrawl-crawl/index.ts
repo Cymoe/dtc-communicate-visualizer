@@ -11,34 +11,16 @@ async function takeScreenshot(url: string, apiKey: string): Promise<Response> {
   try {
     console.log(`Taking screenshot of ${url}`);
     
-    // Common popup selectors to wait for
-    const waitForSelectors = [
-      '[class*="popup"]',
-      '[class*="modal"]',
-      '[class*="dialog"]',
-      '[id*="popup"]',
-      '[id*="modal"]',
-      '[role="dialog"]',
-      '.drift-frame-controller',
-      '.klaviyo-form-version-cid',
-      '#attentive_creative',
-      '.needsclick',
-      '[class*="overlay"]',
-      '[class*="lightbox"]'
-    ].join(',');
-
     const params = new URLSearchParams({
       access_key: apiKey,
       url: url,
       viewport_width: '1280',
       viewport_height: '720',
       format: 'jpg',
-      timeout: '30',
       block_ads: 'true',
       block_trackers: 'true',
-      delay: '5',
-      wait_for: waitForSelectors, // Wait for any popup elements to appear
-      scroll_to: waitForSelectors // Scroll to the popup if found
+      delay: '10', // Increased delay to 10 seconds to allow popups to appear
+      full_page: 'true', // Capture full page to ensure we get the popup
     });
 
     const screenshotUrl = `https://api.screenshotone.com/take?${params}`;
