@@ -2,7 +2,7 @@ import { Brand } from "@/data/brands";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ExternalLink, Mail, MessageSquare, LayoutTemplate } from "lucide-react";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { FirecrawlService } from "@/utils/FirecrawlService";
@@ -11,11 +11,20 @@ interface BrandCardProps {
   brand: Brand;
 }
 
+interface CrawlResult {
+  status: string;
+  completed: number;
+  total: number;
+  creditsUsed: number;
+  expiresAt: string;
+  data: any[];
+}
+
 const BrandCard = ({ brand }: BrandCardProps) => {
   const { toast } = useToast();
   const [isHovered, setIsHovered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [popupContent, setPopupContent] = useState<string | null>(null);
+  const [crawlResult, setCrawlResult] = useState<CrawlResult | null>(null);
 
   const fetchPopup = async () => {
     setIsLoading(true);
@@ -25,7 +34,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
       
       if (result.success && result.data) {
         console.log('Successfully fetched popup content:', result.data);
-        setPopupContent(JSON.stringify(result.data, null, 2));
+        setCrawlResult(result.data);
         toast({
           title: "Success",
           description: "Successfully fetched popup content",
@@ -81,6 +90,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
       <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>{brand.name}</DialogTitle>
+          <DialogDescription>View details and marketing materials for {brand.name}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
           <section>
@@ -118,10 +128,37 @@ const BrandCard = ({ brand }: BrandCardProps) => {
             >
               {isLoading ? "Fetching..." : "Fetch Live Popup"}
             </Button>
-            {popupContent && (
-              <pre className="bg-gray-100 p-4 rounded-lg overflow-auto max-h-96">
-                {popupContent}
-              </pre>
+            {crawlResult && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="font-medium">Status</p>
+                    <p>{crawlResult.status}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="font-medium">Pages Crawled</p>
+                    <p>{crawlResult.completed} / {crawlResult.total}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="font-medium">Credits Used</p>
+                    <p>{crawlResult.creditsUsed}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="font-medium">Expires At</p>
+                    <p>{new Date(crawlResult.expiresAt).toLocaleString()}</p>
+                  </div>
+                </div>
+                {crawlResult.data && crawlResult.data.length > 0 ? (
+                  <div className="mt-4">
+                    <h4 className="font-medium mb-2">Crawled Data:</h4>
+                    <pre className="bg-gray-50 p-4 rounded-lg overflow-auto max-h-96 text-sm">
+                      {JSON.stringify(crawlResult.data, null, 2)}
+                    </pre>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 italic">No popup content was found during the crawl.</p>
+                )}
+              </div>
             )}
           </section>
         </div>
