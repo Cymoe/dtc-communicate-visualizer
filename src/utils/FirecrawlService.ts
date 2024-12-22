@@ -24,8 +24,21 @@ export class FirecrawlService {
     try {
       console.log('Fetching Firecrawl API key from Edge Function');
       
-      // Get API key from our Edge Function
-      const response = await fetch('/api/firecrawl-key');
+      // Get API key from our Edge Function using the correct Supabase URL format
+      const response = await fetch('https://vbodnckdrvwjoryqchxa.supabase.co/functions/v1/firecrawl-key', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.error('Failed to get API key, status:', response.status);
+        const text = await response.text();
+        console.error('Response text:', text);
+        return { success: false, error: `Failed to get API key: ${response.statusText}` };
+      }
+
       const { apiKey, error } = await response.json();
       
       if (error || !apiKey) {
