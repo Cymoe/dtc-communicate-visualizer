@@ -19,39 +19,54 @@ serve(async (req) => {
       throw new Error('Screenshot API key not configured')
     }
 
-    const params = new URLSearchParams({
-      url: url,
-      access_key: screenshotApiKey,
-      full_page: 'true',
-      format: 'jpeg',
-      block_ads: 'true',
-      block_cookie_banners: 'true',
-      delay: '300',
-      viewport_width: '1920',
-      viewport_height: '1080',
-      response_type: 'json',
-      timeout: '90'
-    })
+    // Take multiple screenshots with different delays to increase chances of capturing popups
+    const delays = [0, 100, 200]
+    const screenshots = []
 
-    console.log('Making screenshot request with params:', params.toString())
-    
-    const response = await fetch(`https://api.screenshotone.com/take?${params}`)
-    console.log('Screenshot API response status:', response.status)
-    
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Screenshot API error:', errorText)
-      throw new Error(`Screenshot API error: ${response.status} - ${errorText}`)
+    for (const delay of delays) {
+      const params = new URLSearchParams({
+        url: url,
+        access_key: screenshotApiKey,
+        full_page: 'true',
+        format: 'jpeg',
+        block_ads: 'true',
+        block_cookie_banners: 'true',
+        delay: delay.toString(),
+        viewport_width: '1920',
+        viewport_height: '1080',
+        response_type: 'json',
+        timeout: '30'
+      })
+
+      console.log(`Making screenshot request with delay ${delay}ms:`, params.toString())
+      
+      try {
+        const response = await fetch(`https://api.screenshotone.com/take?${params}`)
+        if (!response.ok) {
+          console.error(`Screenshot failed for delay ${delay}ms:`, await response.text())
+          continue
+        }
+
+        const result = await response.json()
+        screenshots.push(result)
+        console.log(`Successfully captured screenshot with ${delay}ms delay`)
+      } catch (error) {
+        console.error(`Error capturing screenshot with ${delay}ms delay:`, error)
+      }
     }
 
-    const result = await response.json()
-    console.log('Screenshot API success, processing result')
+    if (screenshots.length === 0) {
+      throw new Error('Failed to capture any screenshots')
+    }
 
+    // Use the last successful screenshot
+    const lastScreenshot = screenshots[screenshots.length - 1]
+    
     const popupData = {
       title: `Popup from ${url}`,
       description: 'Captured popup content',
       cta: 'View Details',
-      image: result.url || result.image,
+      image: lastScreenshot.url || lastScreenshot.image,
       backgroundColor: '#ffffff',
       textColor: '#000000'
     }
