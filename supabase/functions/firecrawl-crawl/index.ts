@@ -42,7 +42,7 @@ serve(async (req) => {
 
     console.log('Making crawl request to Firecrawl API for URL:', url)
     const result = await firecrawl.crawlUrl(url, {
-      limit: 100,
+      limit: 1, // Reduced from 100 to 1 to minimize credit usage
       scrapeOptions: {
         formats: ['html'],
         selectors: [
@@ -78,13 +78,20 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('Error processing request:', error)
+    
+    // Check if error is related to insufficient credits
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error'
+    const isCreditsError = errorMessage.includes('402') || errorMessage.toLowerCase().includes('insufficient credits')
+    
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error instanceof Error ? error.message : 'Internal server error' 
+        error: isCreditsError 
+          ? 'The free tier limit has been reached. Please try with a different website or try again later.'
+          : errorMessage
       }),
       { 
-        status: 500,
+        status: isCreditsError ? 402 : 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )

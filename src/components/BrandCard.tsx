@@ -42,8 +42,8 @@ const BrandCard = ({ brand }: BrandCardProps) => {
       } else {
         console.error('Failed to fetch popup:', result.error);
         toast({
-          title: "Error",
-          description: result.error || "Failed to fetch popup content",
+          title: "Limited Access",
+          description: result.error || "Failed to fetch popup content. Please try again later.",
           variant: "destructive",
         });
       }
@@ -51,7 +51,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
       console.error('Error fetching popup:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch popup content",
+        description: "Failed to fetch popup content. Please try again later.",
         variant: "destructive",
       });
     } finally {
