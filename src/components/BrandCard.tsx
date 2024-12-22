@@ -7,7 +7,6 @@ import { FirecrawlService } from "@/utils/FirecrawlService";
 import { PopupViewer } from "./popup/PopupViewer";
 import { usePopups } from "@/hooks/usePopups";
 import { supabase } from "@/integrations/supabase/client";
-import { PopupContent } from "@/types/popup";
 import { Json } from "@/integrations/supabase/types";
 
 interface BrandCardProps {
@@ -21,6 +20,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
   const { toast } = useToast();
   const [isHovered, setIsHovered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
   const { data: popups, isLoading: isLoadingPopups } = usePopups(brand.id);
 
@@ -71,7 +71,6 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         return;
       }
 
-      // Ensure the popup content is properly typed
       const popupContent = (Array.isArray(result.data) ? result.data : [result.data]) as unknown as Json[];
 
       console.log('Saving popup content:', popupContent);
@@ -103,6 +102,11 @@ const BrandCard = ({ brand }: BrandCardProps) => {
     }
   };
 
+  const handleImageError = () => {
+    console.error(`Failed to load image for brand: ${brand.name}`);
+    setImageError(true);
+  };
+
   return (
     <div className="space-y-4">
       <Card 
@@ -112,12 +116,20 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         onClick={handleCardClick}
       >
         <CardHeader className="space-y-1">
-          <div className="w-full h-32 relative">
-            <img 
-              src={brand.logo} 
-              alt={brand.name}
-              className="w-full h-full object-contain"
-            />
+          <div className="w-full h-32 relative bg-white flex items-center justify-center p-4">
+            {!imageError ? (
+              <img 
+                src={brand.logo} 
+                alt={`${brand.name} logo`}
+                className="w-full h-full object-contain"
+                onError={handleImageError}
+                loading="lazy"
+              />
+            ) : (
+              <div className="text-gray-400 flex items-center justify-center h-full">
+                {brand.name}
+              </div>
+            )}
             {isLoading && (
               <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
