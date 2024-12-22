@@ -30,25 +30,28 @@ serve(async (req) => {
       )
     }
 
-    console.log('Processing mock data for URL:', url);
+    console.log('Processing screenshot for URL:', url);
     
-    // Return mock popup data
+    // Generate a base64 screenshot using a third-party service
+    const screenshotUrl = `https://api.screenshotone.com/take?access_key=XS76KAMN3R&url=${encodeURIComponent(url)}&full_page=false&viewport_width=1280&viewport_height=720&format=jpg&block_ads=true&block_trackers=true&block_social=true`;
+    
+    const response = await fetch(screenshotUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to capture screenshot: ${response.statusText}`);
+    }
+
+    const imageBuffer = await response.arrayBuffer();
+    const base64Image = `data:image/jpeg;base64,${btoa(String.fromCharCode(...new Uint8Array(imageBuffer)))}`;
+
+    // Return mock popup data with the actual screenshot
     const mockPopups = [
       {
-        title: "Welcome Offer",
-        description: "Get 15% off your first purchase when you sign up for our newsletter!",
-        cta: "Sign Up Now",
-        image: "/placeholder.svg",
+        title: "Website Screenshot",
+        description: "Captured screenshot of the website",
+        cta: "View",
+        image: base64Image,
         backgroundColor: "#FFFFFF",
         textColor: "#000000"
-      },
-      {
-        title: "Limited Time Sale",
-        description: "Shop our biggest sale of the season - up to 50% off!",
-        cta: "Shop Now",
-        image: "/placeholder.svg",
-        backgroundColor: "#F8F8F8",
-        textColor: "#333333"
       }
     ];
 
