@@ -42,13 +42,7 @@ serve(async (req) => {
 
     console.log('Making crawl request to Firecrawl API for URL:', url)
     const result = await firecrawl.crawlUrl(url, {
-      limit: 1,
-      scrapeOptions: {
-        format: 'html',
-        selector: '[class*="popup"], [class*="modal"], [class*="dialog"], [class*="overlay"], [id*="popup"], [id*="modal"], [role="dialog"], [class*="newsletter"], [class*="subscribe"], [class*="sign-up"], [class*="exit"], [class*="intent"]',
-        wait: 5000,
-        screenshot: true
-      }
+      limit: 1
     })
 
     console.log('Crawl result:', result)
