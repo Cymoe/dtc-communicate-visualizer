@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { FirecrawlService } from "@/utils/FirecrawlService";
 import { PopupViewer } from "./popup/PopupViewer";
 import { usePopups } from "@/hooks/usePopups";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BrandCardProps {
   brand: Brand;
