@@ -14,12 +14,47 @@ interface BrandCardProps {
   brand: Brand;
 }
 
+const MAX_SAVE_RETRIES = 3;
+const SAVE_RETRY_DELAY = 2000;
+
 const BrandCard = ({ brand }: BrandCardProps) => {
   const { toast } = useToast();
   const [isHovered, setIsHovered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const { data: popups, isLoading: isLoadingPopups } = usePopups(brand.id);
+
+  const savePopupContent = async (popupContent: Json[], retryCount = 0): Promise<boolean> => {
+    try {
+      const { error: upsertError } = await supabase
+        .from('brand_popups')
+        .upsert({
+          brand_id: brand.id,
+          popup_content: popupContent,
+          updated_at: new Date().toISOString()
+        });
+
+      if (upsertError) {
+        console.error(`Error storing popup data (attempt ${retryCount + 1}/${MAX_SAVE_RETRIES}):`, upsertError);
+        
+        if (retryCount < MAX_SAVE_RETRIES - 1) {
+          await new Promise(resolve => setTimeout(resolve, SAVE_RETRY_DELAY));
+          return savePopupContent(popupContent, retryCount + 1);
+        }
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error(`Error in savePopupContent (attempt ${retryCount + 1}/${MAX_SAVE_RETRIES}):`, error);
+      
+      if (retryCount < MAX_SAVE_RETRIES - 1) {
+        await new Promise(resolve => setTimeout(resolve, SAVE_RETRY_DELAY));
+        return savePopupContent(popupContent, retryCount + 1);
+      }
+      return false;
+    }
+  };
 
   const handleCardClick = async () => {
     setIsLoading(true);
@@ -41,20 +76,12 @@ const BrandCard = ({ brand }: BrandCardProps) => {
 
       console.log('Saving popup content:', popupContent);
 
-      // Store the crawled popup data in Supabase
-      const { error: upsertError } = await supabase
-        .from('brand_popups')
-        .upsert({
-          brand_id: brand.id,
-          popup_content: popupContent,
-          updated_at: new Date().toISOString()
-        });
+      const savedSuccessfully = await savePopupContent(popupContent);
 
-      if (upsertError) {
-        console.error('Error storing popup data:', upsertError);
+      if (!savedSuccessfully) {
         toast({
           title: "Error",
-          description: "Failed to save popup content",
+          description: "Failed to save popup content after multiple attempts",
           variant: "destructive"
         });
         return;
