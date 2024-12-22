@@ -47,15 +47,16 @@ export class FirecrawlService {
         limit: 100,
         scrapeOptions: {
           formats: ['markdown', 'html'],
-          cssSelectors: [
-            // Target common popup selectors
-            '[class*="popup"]',
-            '[class*="modal"]',
-            '[id*="popup"]',
-            '[id*="modal"]',
-            '[class*="newsletter"]',
-            '[class*="subscribe"]'
-          ]
+          selectors: {
+            popups: [
+              '[class*="popup"]',
+              '[class*="modal"]',
+              '[id*="popup"]',
+              '[id*="modal"]',
+              '[class*="newsletter"]',
+              '[class*="subscribe"]'
+            ]
+          }
         }
       }) as CrawlResponse;
 
