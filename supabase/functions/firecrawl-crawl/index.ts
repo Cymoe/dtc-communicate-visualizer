@@ -25,21 +25,26 @@ async function takeScreenshot(url: string, apiKey: string): Promise<string> {
   const screenshotUrl = `https://api.screenshotone.com/take?${params}`;
   console.log('Requesting screenshot from:', screenshotUrl);
 
-  const response = await fetch(screenshotUrl);
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`Screenshot API error (${response.status}):`, errorText);
+  try {
+    const response = await fetch(screenshotUrl);
     
-    if (errorText.includes('screenshots_limit_reached')) {
-      throw new Error('screenshots_limit_reached');
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Screenshot API error (${response.status}):`, errorText);
+      
+      if (errorText.includes('screenshots_limit_reached')) {
+        throw new Error('screenshots_limit_reached');
+      }
+      
+      throw new Error(`Screenshot API error: ${response.status} - ${errorText}`);
     }
-    
-    throw new Error(`Screenshot API error: ${response.status} - ${errorText}`);
-  }
 
-  const imageBuffer = await response.arrayBuffer();
-  return btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+    const imageBuffer = await response.arrayBuffer();
+    return btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+  } catch (error) {
+    console.error('Error in takeScreenshot:', error);
+    throw error;
+  }
 }
 
 serve(async (req) => {
