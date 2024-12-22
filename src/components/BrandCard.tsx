@@ -96,7 +96,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold mb-2">Popup Content</h3>
+            <h3 className="text-lg font-semibold mb-2">Popup Example</h3>
             {isLoading && (
               <div className="text-center py-4">
                 <p>Loading popup content...</p>
@@ -110,10 +110,31 @@ const BrandCard = ({ brand }: BrandCardProps) => {
             )}
 
             {popupData && (
-              <div className="space-y-4">
-                <pre className="bg-gray-50 p-4 rounded-lg overflow-auto max-h-96 text-sm">
-                  {JSON.stringify(popupData.popup_content, null, 2)}
-                </pre>
+              <div 
+                className="rounded-lg p-6 shadow-lg"
+                style={{
+                  backgroundColor: popupData.popup_content.backgroundColor,
+                  color: popupData.popup_content.textColor
+                }}
+              >
+                <div className="max-w-md mx-auto">
+                  <img 
+                    src={popupData.popup_content.image} 
+                    alt="Popup visual" 
+                    className="w-full h-48 object-contain mb-4"
+                  />
+                  <h4 className="text-2xl font-bold mb-2">
+                    {popupData.popup_content.title}
+                  </h4>
+                  <p className="text-lg mb-4">
+                    {popupData.popup_content.description}
+                  </p>
+                  <button 
+                    className="px-6 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  >
+                    {popupData.popup_content.cta}
+                  </button>
+                </div>
               </div>
             )}
           </section>
