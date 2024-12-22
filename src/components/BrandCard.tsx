@@ -27,6 +27,7 @@ interface BrandCardProps {
 const BrandCard = ({ brand }: BrandCardProps) => {
   const { toast } = useToast();
   const [isHovered, setIsHovered] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
 
   const { data: popupData, isLoading, error } = useQuery({
     queryKey: ['brandPopup', brand.id],
@@ -43,7 +44,6 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         throw error;
       }
 
-      // First assert as unknown, then as our expected type
       const rawData = data as unknown;
       const typedData = rawData as BrandPopup;
       
@@ -52,120 +52,93 @@ const BrandCard = ({ brand }: BrandCardProps) => {
     }
   });
 
+  // Function to handle popup close
+  const handleClosePopup = () => {
+    setShowPopup(false);
+  };
+
   return (
-    <Dialog>
-      <DialogTrigger>
-        <Card 
-          className="cursor-pointer transition-all duration-300 hover:shadow-lg"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+    <>
+      <Card 
+        className="cursor-pointer transition-all duration-300 hover:shadow-lg"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={() => setShowPopup(true)}
+      >
+        <CardHeader className="space-y-1">
+          <div className="w-full h-32 relative">
+            <img 
+              src={brand.logo} 
+              alt={brand.name}
+              className="w-full h-full object-contain"
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <h3 className="font-semibold text-lg mb-2">{brand.name}</h3>
+          <div className="flex gap-2 justify-center">
+            <ExternalLink className="w-5 h-5 text-blue-600" />
+            <Mail className="w-5 h-5 text-blue-600" />
+            <MessageSquare className="w-5 h-5 text-blue-600" />
+            <LayoutTemplate className="w-5 h-5 text-blue-600" />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Brand Website Popup */}
+      {showPopup && popupData && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={handleClosePopup}
         >
-          <CardHeader className="space-y-1">
-            <div className="w-full h-32 relative">
+          <div 
+            className="relative max-w-[500px] mx-4 animate-in fade-in zoom-in duration-300"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: popupData.popup_content.backgroundColor,
+              color: popupData.popup_content.textColor,
+            }}
+          >
+            {/* Close button */}
+            <button 
+              onClick={handleClosePopup}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-opacity-20 hover:bg-opacity-30 transition-all"
+              style={{
+                backgroundColor: popupData.popup_content.textColor,
+                color: popupData.popup_content.backgroundColor
+              }}
+            >
+              ×
+            </button>
+
+            <div className="p-8">
               <img 
-                src={brand.logo} 
-                alt={brand.name}
-                className="w-full h-full object-contain"
+                src={popupData.popup_content.image} 
+                alt="Popup visual" 
+                className="w-full h-48 object-contain mb-6"
               />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <h3 className="font-semibold text-lg mb-2">{brand.name}</h3>
-            <div className="flex gap-2 justify-center">
-              <ExternalLink className="w-5 h-5 text-blue-600" />
-              <Mail className="w-5 h-5 text-blue-600" />
-              <MessageSquare className="w-5 h-5 text-blue-600" />
-              <LayoutTemplate className="w-5 h-5 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{brand.name}</DialogTitle>
-          <DialogDescription>View details and marketing materials for {brand.name}</DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4">
-          <section>
-            <h3 className="text-lg font-semibold mb-2">Website</h3>
-            <a href={brand.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-2">
-              <ExternalLink className="w-4 h-4" />
-              Visit Website
-            </a>
-          </section>
-          
-          <section>
-            <h3 className="text-lg font-semibold mb-2">SMS Examples</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {brand.smsExamples.map((sms, index) => (
-                <img key={index} src={sms} alt="SMS Example" className="w-full rounded-lg shadow" />
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold mb-2">Email Examples</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {brand.emailExamples.map((email, index) => (
-                <img key={index} src={email} alt="Email Example" className="w-full rounded-lg shadow" />
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold mb-2">Popup Example</h3>
-            {isLoading && (
-              <div className="text-center py-4">
-                <p>Loading popup content...</p>
+              <h4 className="text-3xl font-bold mb-4 text-center">
+                {popupData.popup_content.title}
+              </h4>
+              <p className="text-lg mb-6 text-center leading-relaxed">
+                {popupData.popup_content.description}
+              </p>
+              <div className="flex justify-center">
+                <button 
+                  className="px-8 py-3 rounded-full text-lg font-semibold transition-transform hover:scale-105"
+                  style={{
+                    backgroundColor: popupData.popup_content.textColor,
+                    color: popupData.popup_content.backgroundColor
+                  }}
+                >
+                  {popupData.popup_content.cta}
+                </button>
               </div>
-            )}
-            
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-red-800">Failed to load popup content. Please try again later.</p>
-              </div>
-            )}
-
-            {popupData && (
-              <div 
-                className="relative rounded-lg shadow-2xl overflow-hidden"
-                style={{
-                  backgroundColor: popupData.popup_content.backgroundColor,
-                  color: popupData.popup_content.textColor,
-                  maxWidth: '500px',
-                  margin: '0 auto'
-                }}
-              >
-                <div className="p-8">
-                  <img 
-                    src={popupData.popup_content.image} 
-                    alt="Popup visual" 
-                    className="w-full h-48 object-contain mb-6"
-                  />
-                  <h4 className="text-3xl font-bold mb-4 text-center">
-                    {popupData.popup_content.title}
-                  </h4>
-                  <p className="text-lg mb-6 text-center leading-relaxed">
-                    {popupData.popup_content.description}
-                  </p>
-                  <div className="flex justify-center">
-                    <button 
-                      className="px-8 py-3 rounded-full text-lg font-semibold transition-transform hover:scale-105"
-                      style={{
-                        backgroundColor: popupData.popup_content.textColor,
-                        color: popupData.popup_content.backgroundColor
-                      }}
-                    >
-                      {popupData.popup_content.cta}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </section>
+            </div>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+    </>
   );
 };
 
