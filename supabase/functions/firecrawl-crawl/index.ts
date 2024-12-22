@@ -20,12 +20,15 @@ serve(async (req) => {
       throw new Error('Screenshot API key not configured')
     }
 
-    // Simplified API parameters - removed unsupported parameters
+    // Using only supported parameters according to the API documentation
     const params = new URLSearchParams({
       url: url,
       access_key: screenshotApiKey,
-      full_page: 'true',
-      format: 'jpeg',
+      capture_full_page: 'true',
+      output_format: 'jpeg',
+      block_ads: 'true',
+      block_cookie_banners: 'true',
+      delay: '2'  // Wait 2 seconds for dynamic content to load
     })
 
     console.log('Making screenshot request with params:', params.toString())
