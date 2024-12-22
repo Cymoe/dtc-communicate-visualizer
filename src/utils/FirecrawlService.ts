@@ -41,7 +41,11 @@ export class FirecrawlService {
       }
 
       const result = await response.json();
-      console.log('Screenshot API success response:', result);
+      console.log('Screenshot API response:', {
+        success: result.success,
+        dataLength: result.data ? result.data.length : 0,
+        firstImage: result.data?.[0]?.image ? `${result.data[0].image.substring(0, 50)}...` : 'No image'
+      });
       
       if (!result.success) {
         console.error('Screenshot capture failed:', result.error);
@@ -49,6 +53,14 @@ export class FirecrawlService {
           success: false, 
           error: result.error || 'Failed to capture screenshot' 
         };
+      }
+
+      // Ensure the image data is properly formatted
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(popup => ({
+          ...popup,
+          image: popup.image.startsWith('data:image/') ? popup.image : `data:image/jpeg;base64,${popup.image}`
+        }));
       }
 
       return result as CrawlResponse;

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PopupContent } from "@/types/popup";
 
@@ -13,7 +12,6 @@ interface PopupViewerProps {
 
 export const PopupViewer = ({ brandId, popups, isLoading }: PopupViewerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const { toast } = useToast();
   const [imageError, setImageError] = useState(false);
 
   if (isLoading) {
@@ -49,7 +47,11 @@ export const PopupViewer = ({ brandId, popups, isLoading }: PopupViewerProps) =>
   };
 
   const handleImageError = () => {
-    console.error('Error loading image for popup:', currentPopup);
+    console.error('Error loading popup image:', {
+      brandId,
+      popupIndex: currentIndex,
+      imageUrl: currentPopup.image
+    });
     setImageError(true);
   };
 
@@ -81,12 +83,14 @@ export const PopupViewer = ({ brandId, popups, isLoading }: PopupViewerProps) =>
       <CardContent>
         <div className="w-full rounded-lg overflow-hidden">
           {currentPopup.image && !imageError ? (
-            <img 
-              src={currentPopup.image} 
-              alt="Popup screenshot" 
-              className="w-full h-auto rounded-lg shadow-lg"
-              onError={handleImageError}
-            />
+            <div className="relative w-full pt-[56.25%]">
+              <img 
+                src={currentPopup.image}
+                alt="Popup screenshot" 
+                className="absolute top-0 left-0 w-full h-full object-contain rounded-lg shadow-lg"
+                onError={handleImageError}
+              />
+            </div>
           ) : (
             <div className="w-full h-32 flex items-center justify-center bg-gray-100 rounded-lg">
               <span className="text-gray-400">No screenshot available</span>
