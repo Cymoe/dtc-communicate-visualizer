@@ -44,18 +44,12 @@ serve(async (req) => {
 
     console.log('Processing screenshot for URL:', url);
     
-    // Generate a screenshot using screenshotone.com
-    const screenshotUrl = new URL('https://api.screenshotone.com/take');
-    screenshotUrl.searchParams.append('access_key', apiKey);
-    screenshotUrl.searchParams.append('url', url);
-    screenshotUrl.searchParams.append('viewport_width', '1280');
-    screenshotUrl.searchParams.append('viewport_height', '720');
-    screenshotUrl.searchParams.append('format', 'jpg');
-    screenshotUrl.searchParams.append('timeout', '30');
+    // Simple screenshot request with minimal parameters
+    const screenshotUrl = `https://api.screenshotone.com/take?access_key=${apiKey}&url=${encodeURIComponent(url)}&viewport_width=1280&viewport_height=720&format=jpg`;
     
-    console.log('Making request to Screenshot API:', screenshotUrl.toString());
+    console.log('Making request to Screenshot API');
     
-    const response = await fetch(screenshotUrl.toString());
+    const response = await fetch(screenshotUrl);
     console.log('Screenshot API response status:', response.status);
     
     if (!response.ok) {
@@ -69,20 +63,18 @@ serve(async (req) => {
     
     console.log('Successfully generated screenshot');
 
-    // Return popup data with the actual screenshot
-    const popupData = {
-      title: "Website Screenshot",
-      description: "Captured screenshot of the website",
-      cta: "View",
-      image: `data:image/jpeg;base64,${base64Image}`,
-      backgroundColor: "#FFFFFF",
-      textColor: "#000000"
-    };
-
+    // Return popup data with the screenshot
     return new Response(
       JSON.stringify({ 
         success: true, 
-        data: [popupData]
+        data: [{
+          title: "Website Screenshot",
+          description: "Captured screenshot of the website",
+          cta: "View",
+          image: `data:image/jpeg;base64,${base64Image}`,
+          backgroundColor: "#FFFFFF",
+          textColor: "#000000"
+        }]
       }),
       { 
         status: 200,
