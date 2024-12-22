@@ -44,6 +44,14 @@ export class FirecrawlService {
             console.error(`Failed to capture screenshot (attempt ${attempt}/${MAX_RETRIES}), status:`, response.status);
             console.error('Response text:', text);
             
+            // Check for screenshot limit error
+            if (text.includes('screenshots_limit_reached')) {
+              return { 
+                success: false, 
+                error: 'Screenshot limit reached. Please try again later or contact support to increase your limit.' 
+              };
+            }
+            
             if (attempt === MAX_RETRIES) {
               return { 
                 success: false, 
