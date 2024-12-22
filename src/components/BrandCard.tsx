@@ -3,13 +3,48 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ExternalLink, Mail, MessageSquare, LayoutTemplate } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { FirecrawlService } from "@/utils/FirecrawlService";
 
 interface BrandCardProps {
   brand: Brand;
 }
 
 const BrandCard = ({ brand }: BrandCardProps) => {
+  const { toast } = useToast();
   const [isHovered, setIsHovered] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [popupContent, setPopupContent] = useState<string | null>(null);
+
+  const fetchPopup = async () => {
+    setIsLoading(true);
+    try {
+      const result = await FirecrawlService.crawlWebsite(brand.website);
+      if (result.success && result.data) {
+        setPopupContent(JSON.stringify(result.data, null, 2));
+        toast({
+          title: "Success",
+          description: "Successfully fetched popup content",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to fetch popup content",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching popup:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch popup content",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Dialog>
@@ -71,8 +106,19 @@ const BrandCard = ({ brand }: BrandCardProps) => {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold mb-2">Popup Example</h3>
-            <img src={brand.popupExample} alt="Popup Example" className="w-full rounded-lg shadow" />
+            <h3 className="text-lg font-semibold mb-2">Live Popup Content</h3>
+            <Button 
+              onClick={fetchPopup} 
+              disabled={isLoading}
+              className="mb-4"
+            >
+              {isLoading ? "Fetching..." : "Fetch Live Popup"}
+            </Button>
+            {popupContent && (
+              <pre className="bg-gray-100 p-4 rounded-lg overflow-auto max-h-96">
+                {popupContent}
+              </pre>
+            )}
           </section>
         </div>
       </DialogContent>
