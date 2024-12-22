@@ -22,23 +22,25 @@ export class FirecrawlService {
 
   static async crawlWebsite(url: string): Promise<{ success: boolean; error?: string; data?: any }> {
     try {
-      console.log('Making crawl request to Firecrawl API');
+      console.log('Fetching Firecrawl API key from Edge Function');
       
-      // Initialize FirecrawlApp with API key from environment
+      // Get API key from our Edge Function
       const response = await fetch('/api/firecrawl-key');
-      const { apiKey } = await response.json();
+      const { apiKey, error } = await response.json();
       
-      if (!apiKey) {
-        console.error('No API key found');
-        return { success: false, error: 'API key not found' };
+      if (error || !apiKey) {
+        console.error('Failed to get API key:', error);
+        return { success: false, error: 'Failed to get API key' };
       }
 
+      console.log('Successfully got API key, initializing Firecrawl');
       this.firecrawlApp = new FirecrawlApp({ apiKey });
 
+      console.log('Making crawl request to Firecrawl API for URL:', url);
       const crawlResponse = await this.firecrawlApp.crawlUrl(url, {
         limit: 100,
         scrapeOptions: {
-          formats: ['markdown', 'html']
+          formats: ['html']
         }
       }) as CrawlResponse;
 

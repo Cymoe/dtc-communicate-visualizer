@@ -20,14 +20,18 @@ const BrandCard = ({ brand }: BrandCardProps) => {
   const fetchPopup = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching popup content for:', brand.website);
       const result = await FirecrawlService.crawlWebsite(brand.website);
+      
       if (result.success && result.data) {
+        console.log('Successfully fetched popup content:', result.data);
         setPopupContent(JSON.stringify(result.data, null, 2));
         toast({
           title: "Success",
           description: "Successfully fetched popup content",
         });
       } else {
+        console.error('Failed to fetch popup:', result.error);
         toast({
           title: "Error",
           description: result.error || "Failed to fetch popup content",
