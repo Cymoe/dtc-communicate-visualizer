@@ -40,8 +40,6 @@ async function takeScreenshot(url: string): Promise<string> {
     full_page: 'false',
     timeout: '30',
     selector: popupSelectors,
-    scroll_to_selector: popupSelectors,
-    extract_selector: popupSelectors,
     wait_for_selector: popupSelectors,
   });
 
