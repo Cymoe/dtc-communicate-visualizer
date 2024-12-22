@@ -50,8 +50,10 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         return null;
       }
 
-      console.log('Retrieved popup data:', data);
-      return data as BrandPopup;
+      // Type assertion to ensure the data matches our expected structure
+      const typedData = data as { popup_content: PopupContent };
+      console.log('Retrieved popup data:', typedData);
+      return typedData;
     }
   });
 
@@ -152,7 +154,6 @@ const BrandCard = ({ brand }: BrandCardProps) => {
               color: popupData.popup_content.textColor,
             }}
           >
-            {/* Close button */}
             <button 
               onClick={handleClosePopup}
               className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-opacity-20 hover:bg-opacity-30 transition-all"
