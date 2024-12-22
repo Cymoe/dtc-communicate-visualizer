@@ -86,7 +86,7 @@ export const PopupViewer = ({ brandId, popups, isLoading }: PopupViewerProps) =>
             <div className="relative w-full pt-[56.25%]">
               <img 
                 src={currentPopup.image}
-                alt="Popup screenshot" 
+                alt={currentPopup.title || "Popup screenshot"}
                 className="absolute top-0 left-0 w-full h-full object-contain rounded-lg shadow-lg"
                 onError={handleImageError}
                 crossOrigin="anonymous"
@@ -94,7 +94,7 @@ export const PopupViewer = ({ brandId, popups, isLoading }: PopupViewerProps) =>
             </div>
           ) : (
             <div className="w-full h-32 flex items-center justify-center bg-gray-100 rounded-lg">
-              <span className="text-gray-400">No screenshot available</span>
+              <span className="text-gray-400">Failed to load screenshot</span>
             </div>
           )}
           {currentPopup.title && (

@@ -1,9 +1,9 @@
 export interface PopupContent {
-  [key: string]: string;
-  title: string;
-  description: string;
-  cta: string;
   image: string;
-  backgroundColor: string;
-  textColor: string;
+  title?: string;
+  description?: string;
+  cta?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  [key: string]: string | undefined;
 }
