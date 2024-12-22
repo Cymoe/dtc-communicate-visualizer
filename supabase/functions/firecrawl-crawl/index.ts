@@ -45,49 +45,14 @@ serve(async (req) => {
       limit: 5,
       scrapeOptions: {
         formats: ['html'],
-        timeout: 30000,
-        // Using the correct API parameters for v1
-        waitUntil: 'networkidle0',
-        waitForSelector: [
-          'div[class*="popup"]',
-          'div[class*="modal"]',
-          'div[class*="overlay"]',
-          'div[id*="popup"]',
-          'div[id*="modal"]',
-          'div[role="dialog"]',
-          'div[class*="newsletter"]',
-          'div[id*="newsletter"]',
-          'div[class*="exit"]',
-          'div[class*="intent"]'
-        ].join(', ')
+        timeout: 30000
       }
     })
 
     console.log('Raw crawl result:', result)
 
-    // Process each found element to extract popup content
-    const popups = await Promise.all(
-      (result.data || []).map(async (item: any) => {
-        const popupData = await processPopupContent(item.content || '');
-        if (popupData) {
-          console.log('Extracted popup:', popupData);
-          return popupData;
-        }
-        return null;
-      })
-    );
-
-    // Filter out null values and duplicates
-    const validPopups = popups.filter((popup): popup is NonNullable<typeof popup> => 
-      popup !== null && 
-      popup.title !== null && 
-      popup.description !== null
-    );
-
-    console.log('Processed popups:', validPopups);
-
     return new Response(
-      JSON.stringify({ success: true, data: validPopups }),
+      JSON.stringify({ success: true, data: result }),
       { 
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -113,59 +78,3 @@ serve(async (req) => {
     )
   }
 })
-
-async function processPopupContent(html: string) {
-  try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-
-    // Extract text content
-    const titleElement = doc.querySelector('h1, h2, h3, h4, h5, h6, [class*="title"], [class*="heading"]');
-    const descriptionElement = doc.querySelector('p, [class*="description"], [class*="text"]');
-    const buttonElement = doc.querySelector('button, a.button, .btn, [class*="cta"]');
-    const imageElement = doc.querySelector('img');
-
-    // Extract colors
-    const backgroundColorElement = doc.querySelector('[style*="background"], [class*="bg-"]');
-    const textColorElement = doc.querySelector('[style*="color"]');
-
-    // Get background color from style or compute it
-    let backgroundColor = '#FFFFFF';
-    if (backgroundColorElement) {
-      const style = backgroundColorElement.getAttribute('style');
-      const bgColorMatch = style?.match(/background(?:-color)?:\s*(#[a-f0-9]{6}|#[a-f0-9]{3}|rgb\([^)]+\))/i);
-      if (bgColorMatch) {
-        backgroundColor = bgColorMatch[1];
-      }
-    }
-
-    // Get text color from style or compute it
-    let textColor = '#000000';
-    if (textColorElement) {
-      const style = textColorElement.getAttribute('style');
-      const textColorMatch = style?.match(/color:\s*(#[a-f0-9]{6}|#[a-f0-9]{3}|rgb\([^)]+\))/i);
-      if (textColorMatch) {
-        textColor = textColorMatch[1];
-      }
-    }
-
-    const popup = {
-      title: titleElement?.textContent?.trim() || null,
-      description: descriptionElement?.textContent?.trim() || null,
-      cta: buttonElement?.textContent?.trim() || "Sign Up",
-      image: imageElement?.getAttribute('src') || "/placeholder.svg",
-      backgroundColor,
-      textColor
-    };
-
-    // Only return if we have at least a title or description
-    if (popup.title || popup.description) {
-      return popup;
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Error processing popup content:', error);
-    return null;
-  }
-}
