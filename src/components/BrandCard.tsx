@@ -25,9 +25,11 @@ const BrandCard = ({ brand }: BrandCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [crawlResult, setCrawlResult] = useState<CrawlResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchPopup = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       console.log('Fetching popup content for:', brand.website);
       const result = await FirecrawlService.crawlWebsite(brand.website);
@@ -41,6 +43,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         });
       } else {
         console.error('Failed to fetch popup:', result.error);
+        setError(result.error || "Failed to fetch popup content");
         toast({
           title: "Limited Access",
           description: result.error || "Failed to fetch popup content. Please try again later.",
@@ -49,6 +52,8 @@ const BrandCard = ({ brand }: BrandCardProps) => {
       }
     } catch (error) {
       console.error('Error fetching popup:', error);
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      setError(errorMessage);
       toast({
         title: "Error",
         description: "Failed to fetch popup content. Please try again later.",
@@ -128,7 +133,19 @@ const BrandCard = ({ brand }: BrandCardProps) => {
             >
               {isLoading ? "Fetching..." : "Fetch Live Popup"}
             </Button>
-            {crawlResult && (
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <p className="text-red-800">{error}</p>
+                {error.includes("free tier limit") && (
+                  <p className="text-sm text-red-600 mt-2">
+                    The free tier limit has been reached. Please try again later or try with a different website.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {crawlResult && !error && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="bg-gray-50 p-3 rounded-lg">
