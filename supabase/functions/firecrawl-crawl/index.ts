@@ -23,16 +23,16 @@ serve(async (req) => {
     const params = new URLSearchParams({
       url: url,
       access_key: screenshotApiKey,
-      full_page: 'true', // Capture full page
+      full_page: 'true',
       format: 'jpeg',
       block_ads: 'true',
       block_cookie_banners: 'true',
-      delay: '5000', // 5 second delay
+      delay: '3000',
       viewport_width: '1920',
       viewport_height: '1080',
-      response_type: 'json', // Get JSON response with metadata
-      wait_for: '.modal,.popup,div[class*="popup"],div[class*="modal"],.newsletter-popup,#popup', // Common popup selectors
-      timeout: '30000'
+      response_type: 'json',
+      wait_for: '.modal,.popup,div[class*="popup"],div[class*="modal"],.newsletter-popup,#popup',
+      timeout: '20000'
     })
 
     console.log('Making screenshot request with params:', params.toString())
@@ -47,14 +47,14 @@ serve(async (req) => {
     }
 
     const result = await response.json()
-    console.log('Screenshot API success, image size:', result.image?.length || 0)
+    console.log('Screenshot API success, processing result')
 
-    // Extract popup content with the screenshot
+    // Create a more detailed popup data object
     const popupData = {
-      title: 'Website Popup',
-      description: `Captured popup from ${url}`,
+      title: `Popup from ${url}`,
+      description: 'Captured popup content',
       cta: 'View Details',
-      image: result.image,
+      image: result.url || result.image, // Handle both URL and base64 responses
       backgroundColor: '#ffffff',
       textColor: '#000000'
     }

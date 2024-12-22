@@ -89,6 +89,7 @@ export const PopupViewer = ({ brandId, popups, isLoading }: PopupViewerProps) =>
                 alt="Popup screenshot" 
                 className="absolute top-0 left-0 w-full h-full object-contain rounded-lg shadow-lg"
                 onError={handleImageError}
+                crossOrigin="anonymous"
               />
             </div>
           ) : (
