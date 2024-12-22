@@ -8,20 +8,32 @@ export interface Brand {
 export const brands: Brand[] = [
   {
     id: "1",
-    name: "Allbirds",
+    name: "Glossier",
     logo: "/placeholder.svg",
-    website: "https://www.allbirds.com"
+    website: "https://www.glossier.com"
   },
   {
     id: "2",
-    name: "Warby Parker",
+    name: "Bombas",
     logo: "/placeholder.svg",
-    website: "https://www.warbyparker.com"
+    website: "https://www.bombas.com"
   },
   {
     id: "3",
-    name: "Casper",
+    name: "Away",
     logo: "/placeholder.svg",
-    website: "https://www.casper.com"
+    website: "https://www.awaytravel.com"
+  },
+  {
+    id: "4",
+    name: "Brooklinen",
+    logo: "/placeholder.svg",
+    website: "https://www.brooklinen.com"
+  },
+  {
+    id: "5",
+    name: "Outdoor Voices",
+    logo: "/placeholder.svg",
+    website: "https://www.outdoorvoices.com"
   }
 ];

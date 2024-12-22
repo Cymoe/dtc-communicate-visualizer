@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { url, selectors } = await req.json()
+    const { url } = await req.json()
     
     if (!url) {
       return new Response(
@@ -42,12 +42,23 @@ serve(async (req) => {
 
     console.log('Making crawl request to Firecrawl API for URL:', url)
     const result = await firecrawl.crawlUrl(url, {
-      limit: 5, // Increased limit to catch more popups
+      limit: 5,
       scrapeOptions: {
-        selectors: selectors,
-        waitForSelectors: selectors,
         formats: ['html'],
-        timeout: 30000
+        timeout: 30000,
+        // Using CSS selectors that target common popup elements
+        cssSelectors: [
+          '[class*="popup"]',
+          '[class*="modal"]',
+          '[class*="overlay"]',
+          '[id*="popup"]',
+          '[id*="modal"]',
+          '[role="dialog"]',
+          '[class*="newsletter"]',
+          '[id*="newsletter"]',
+          '[class*="exit"]',
+          '[class*="intent"]'
+        ]
       }
     })
 
