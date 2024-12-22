@@ -42,10 +42,26 @@ serve(async (req) => {
 
     console.log('Making crawl request to Firecrawl API for URL:', url)
     const result = await firecrawl.crawlUrl(url, {
-      limit: 1, // Only crawl the homepage
-      format: 'html', // Get HTML content
-      cssSelector: '[class*="popup"], [class*="modal"], [class*="dialog"], [class*="overlay"], [id*="popup"], [id*="modal"], [role="dialog"], [class*="newsletter"], [class*="subscribe"], [class*="sign-up"], [class*="exit"], [class*="intent"]',
-      waitUntil: 'networkidle0' // Wait for network to be idle to capture dynamic content
+      limit: 1,
+      scrapeOptions: {
+        formats: ['html'],
+        selectors: [
+          '[class*="popup"]',
+          '[class*="modal"]',
+          '[class*="dialog"]',
+          '[class*="overlay"]',
+          '[id*="popup"]',
+          '[id*="modal"]',
+          '[role="dialog"]',
+          '[class*="newsletter"]',
+          '[class*="subscribe"]',
+          '[class*="sign-up"]',
+          '[class*="exit"]',
+          '[class*="intent"]'
+        ],
+        waitForSelector: '[class*="popup"], [class*="modal"], [class*="dialog"]',
+        waitTime: 5000
+      }
     })
 
     console.log('Crawl result:', result)
