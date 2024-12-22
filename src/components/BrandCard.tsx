@@ -3,66 +3,37 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ExternalLink, Mail, MessageSquare, LayoutTemplate } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { FirecrawlService } from "@/utils/FirecrawlService";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface BrandCardProps {
   brand: Brand;
 }
 
-interface CrawlResult {
-  status: string;
-  completed: number;
-  total: number;
-  creditsUsed: number;
-  expiresAt: string;
-  data: any[];
-}
-
 const BrandCard = ({ brand }: BrandCardProps) => {
   const { toast } = useToast();
   const [isHovered, setIsHovered] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [crawlResult, setCrawlResult] = useState<CrawlResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchPopup = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      console.log('Fetching popup content for:', brand.website);
-      const result = await FirecrawlService.crawlWebsite(brand.website);
-      
-      if (result.success && result.data) {
-        console.log('Successfully fetched popup content:', result.data);
-        setCrawlResult(result.data);
-        toast({
-          title: "Success",
-          description: "Successfully fetched popup content",
-        });
-      } else {
-        console.error('Failed to fetch popup:', result.error);
-        setError(result.error || "Failed to fetch popup content");
-        toast({
-          title: "Limited Access",
-          description: result.error || "Failed to fetch popup content. Please try again later.",
-          variant: "destructive",
-        });
+  const { data: popupData, isLoading, error } = useQuery({
+    queryKey: ['brandPopup', brand.id],
+    queryFn: async () => {
+      console.log('Fetching popup data for brand:', brand.id);
+      const { data, error } = await supabase
+        .from('brand_popups')
+        .select('popup_content')
+        .eq('brand_id', brand.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching popup data:', error);
+        throw error;
       }
-    } catch (error) {
-      console.error('Error fetching popup:', error);
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
-      setError(errorMessage);
-      toast({
-        title: "Error",
-        description: "Failed to fetch popup content. Please try again later.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+
+      console.log('Retrieved popup data:', data);
+      return data;
     }
-  };
+  });
 
   return (
     <Dialog>
@@ -125,56 +96,24 @@ const BrandCard = ({ brand }: BrandCardProps) => {
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold mb-2">Live Popup Content</h3>
-            <Button 
-              onClick={fetchPopup} 
-              disabled={isLoading}
-              className="mb-4"
-            >
-              {isLoading ? "Fetching..." : "Fetch Live Popup"}
-            </Button>
-
+            <h3 className="text-lg font-semibold mb-2">Popup Content</h3>
+            {isLoading && (
+              <div className="text-center py-4">
+                <p>Loading popup content...</p>
+              </div>
+            )}
+            
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <p className="text-red-800">{error}</p>
-                {error.includes("free tier limit") && (
-                  <p className="text-sm text-red-600 mt-2">
-                    The free tier limit has been reached. Please try again later or try with a different website.
-                  </p>
-                )}
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800">Failed to load popup content. Please try again later.</p>
               </div>
             )}
 
-            {crawlResult && !error && (
+            {popupData && (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="font-medium">Status</p>
-                    <p>{crawlResult.status}</p>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="font-medium">Pages Crawled</p>
-                    <p>{crawlResult.completed} / {crawlResult.total}</p>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="font-medium">Credits Used</p>
-                    <p>{crawlResult.creditsUsed}</p>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="font-medium">Expires At</p>
-                    <p>{new Date(crawlResult.expiresAt).toLocaleString()}</p>
-                  </div>
-                </div>
-                {crawlResult.data && crawlResult.data.length > 0 ? (
-                  <div className="mt-4">
-                    <h4 className="font-medium mb-2">Crawled Data:</h4>
-                    <pre className="bg-gray-50 p-4 rounded-lg overflow-auto max-h-96 text-sm">
-                      {JSON.stringify(crawlResult.data, null, 2)}
-                    </pre>
-                  </div>
-                ) : (
-                  <p className="text-gray-500 italic">No popup content was found during the crawl.</p>
-                )}
+                <pre className="bg-gray-50 p-4 rounded-lg overflow-auto max-h-96 text-sm">
+                  {JSON.stringify(popupData.popup_content, null, 2)}
+                </pre>
               </div>
             )}
           </section>
