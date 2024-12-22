@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import puppeteer from 'npm:puppeteer'
+import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,10 +31,13 @@ serve(async (req) => {
     }
 
     console.log('Launching browser to capture popup screenshots for URL:', url)
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] })
+    const browser = await puppeteer.launch({ 
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    })
     const page = await browser.newPage()
     
     try {
+      console.log('Navigating to URL:', url)
       await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 })
       
       // Wait for potential popups to appear
@@ -57,6 +60,7 @@ serve(async (req) => {
       const popups = []
       
       for (const selector of popupSelectors) {
+        console.log('Checking selector:', selector)
         const elements = await page.$$(selector)
         
         for (const element of elements) {
@@ -83,6 +87,7 @@ serve(async (req) => {
               ? await ctaButton.evaluate(el => el.textContent?.trim() || 'Click Here')
               : 'Click Here'
 
+            console.log('Found popup with title:', textContent?.split('\n')[0]?.trim() || 'Popup')
             popups.push({
               title: textContent?.split('\n')[0]?.trim() || 'Popup',
               description: textContent?.split('\n').slice(1).join(' ').trim() || 'Sign up for exclusive offers',
@@ -96,8 +101,6 @@ serve(async (req) => {
           }
         }
       }
-
-      await browser.close()
 
       // Use default popup if no content was found
       const defaultPopup = {
