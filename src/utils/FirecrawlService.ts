@@ -47,7 +47,7 @@ export class FirecrawlService {
         limit: 100,
         scrapeOptions: {
           formats: ['markdown', 'html'],
-          includeSelectors: [
+          include: [
             '[class*="popup"]',
             '[class*="modal"]',
             '[id*="popup"]',
