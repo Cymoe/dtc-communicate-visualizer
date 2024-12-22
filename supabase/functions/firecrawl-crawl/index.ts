@@ -46,8 +46,9 @@ serve(async (req) => {
       scrapeOptions: {
         formats: ['html'],
         timeout: 30000,
-        // Using valid selectors for popup elements
-        selector: [
+        // Using the correct API parameters for v1
+        waitUntil: 'networkidle0',
+        waitForSelector: [
           'div[class*="popup"]',
           'div[class*="modal"]',
           'div[class*="overlay"]',
