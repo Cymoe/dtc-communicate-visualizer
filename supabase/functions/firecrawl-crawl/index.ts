@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { url } = await req.json()
+    const { url, selectors } = await req.json()
     
     if (!url) {
       return new Response(
@@ -42,23 +42,22 @@ serve(async (req) => {
 
     console.log('Making crawl request to Firecrawl API for URL:', url)
     const result = await firecrawl.crawlUrl(url, {
-      limit: 1
+      limit: 1,
+      scrapeOptions: {
+        selectors: selectors,
+        waitForSelectors: selectors,
+        formats: ['html'],
+        timeout: 30000
+      }
     })
 
-    console.log('Crawl result:', result)
-    
-    // Transform the result into a popup-friendly format
-    const popupContent = {
-      title: "Welcome",
-      description: "Sign up for exclusive offers",
-      cta: "Sign Up Now",
-      image: "/placeholder.svg",
-      backgroundColor: "#FFFFFF",
-      textColor: "#000000"
-    };
+    console.log('Raw crawl result:', result)
+
+    // Extract popup content from the crawled HTML
+    const popupData = await processPopupContent(result.data[0]?.content || '');
 
     return new Response(
-      JSON.stringify({ success: true, data: popupContent }),
+      JSON.stringify({ success: true, data: popupData }),
       { 
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -67,7 +66,6 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error processing request:', error)
     
-    // Check if error is related to insufficient credits
     const errorMessage = error instanceof Error ? error.message : 'Internal server error'
     const isCreditsError = errorMessage.includes('402') || errorMessage.toLowerCase().includes('insufficient credits')
     
@@ -85,3 +83,29 @@ serve(async (req) => {
     )
   }
 })
+
+async function processPopupContent(html: string) {
+  try {
+    // Basic extraction of popup content
+    const titleMatch = html.match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/i);
+    const descriptionMatch = html.match(/<p[^>]*>(.*?)<\/p>/i);
+    const buttonMatch = html.match(/<button[^>]*>(.*?)<\/button>/i);
+    const imgMatch = html.match(/<img[^>]*src=["']([^"']+)["'][^>]*>/i);
+    
+    // Extract background color from style attributes
+    const bgColorMatch = html.match(/background-color:\s*(#[a-f0-9]{6}|#[a-f0-9]{3}|rgb\([^)]+\))/i);
+    const textColorMatch = html.match(/color:\s*(#[a-f0-9]{6}|#[a-f0-9]{3}|rgb\([^)]+\))/i);
+
+    return {
+      title: titleMatch ? titleMatch[1].trim() : null,
+      description: descriptionMatch ? descriptionMatch[1].trim() : null,
+      cta: buttonMatch ? buttonMatch[1].trim() : null,
+      image: imgMatch ? imgMatch[1] : null,
+      backgroundColor: bgColorMatch ? bgColorMatch[1] : "#FFFFFF",
+      textColor: textColorMatch ? textColorMatch[1] : "#000000"
+    };
+  } catch (error) {
+    console.error('Error processing popup content:', error);
+    return null;
+  }
+}
