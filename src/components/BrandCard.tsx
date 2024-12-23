@@ -23,13 +23,20 @@ const BrandCard = ({ brand }: BrandCardProps) => {
   const handleCardClick = async () => {
     setIsLoading(true);
     try {
-      // Construct the Milled.com URL for the brand
-      const milledUrl = `https://milled.com/${brand.name.toLowerCase().replace(/\s+/g, '')}`;
-      console.log('Crawling website:', milledUrl);
+      // Format brand name for Milled.com URL (lowercase, remove spaces and special chars)
+      const formattedBrandName = brand.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '') // Remove any non-alphanumeric characters
+        .trim();
+      
+      // Construct the proper Milled.com URL
+      const milledUrl = `https://milled.com/search/${formattedBrandName}`;
+      console.log('Fetching email campaigns from:', milledUrl);
       
       const result = await FirecrawlService.crawlWebsite(milledUrl);
       
       if (!result.success) {
+        console.error('Failed to fetch email campaigns:', result.error);
         toast({
           title: "Error",
           description: 'error' in result ? result.error : "Failed to fetch email campaigns",
@@ -44,7 +51,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         .insert({
           brand_id: brand.id,
           screenshot_url: result.data[0].image,
-          subject_line: `Latest campaign from ${brand.name}`,
+          subject_line: `Latest campaigns from ${brand.name}`,
           campaign_date: new Date().toISOString()
         });
 
@@ -63,10 +70,10 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         description: "Successfully captured email campaign",
       });
     } catch (error) {
-      console.error('Error crawling website:', error);
+      console.error('Error processing email campaigns:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch email campaign",
+        description: "Failed to process email campaigns",
         variant: "destructive"
       });
     } finally {
