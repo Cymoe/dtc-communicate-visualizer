@@ -36,7 +36,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
       const result = await FirecrawlService.crawlWebsite(milledUrl);
       
       if (!result.success) {
-        console.error('Failed to fetch email campaigns:', result.error);
+        console.error('Failed to fetch email campaigns:', 'error' in result ? result.error : 'Unknown error');
         toast({
           title: "Error",
           description: 'error' in result ? result.error : "Failed to fetch email campaigns",
