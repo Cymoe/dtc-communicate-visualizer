@@ -4,17 +4,13 @@ import { ExternalLink, Mail, MessageSquare, LayoutTemplate } from "lucide-react"
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { FirecrawlService } from "@/utils/FirecrawlService";
-import { PopupViewer } from "./popup/PopupViewer";
-import { usePopups } from "@/hooks/usePopups";
+import { EmailCampaignViewer } from "./email/EmailCampaignViewer";
+import { useEmailCampaigns } from "@/hooks/useEmailCampaigns";
 import { supabase } from "@/integrations/supabase/client";
-import { Json } from "@/integrations/supabase/types";
 
 interface BrandCardProps {
   brand: Brand;
 }
-
-const MAX_SAVE_RETRIES = 3;
-const SAVE_RETRY_DELAY = 2000;
 
 const BrandCard = ({ brand }: BrandCardProps) => {
   const { toast } = useToast();
@@ -22,71 +18,41 @@ const BrandCard = ({ brand }: BrandCardProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
   
-  const { data: popups, isLoading: isLoadingPopups } = usePopups(brand.id);
-
-  console.log('Brand data:', {
-    name: brand.name,
-    logo: brand.logo,
-    logoType: typeof brand.logo
-  });
-
-  const savePopupContent = async (popupContent: Json[], retryCount = 0): Promise<boolean> => {
-    try {
-      const { error: upsertError } = await supabase
-        .from('brand_popups')
-        .upsert({
-          brand_id: brand.id,
-          popup_content: popupContent,
-          updated_at: new Date().toISOString()
-        });
-
-      if (upsertError) {
-        console.error(`Error storing popup data (attempt ${retryCount + 1}/${MAX_SAVE_RETRIES}):`, upsertError);
-        
-        if (retryCount < MAX_SAVE_RETRIES - 1) {
-          await new Promise(resolve => setTimeout(resolve, SAVE_RETRY_DELAY));
-          return savePopupContent(popupContent, retryCount + 1);
-        }
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error(`Error in savePopupContent (attempt ${retryCount + 1}/${MAX_SAVE_RETRIES}):`, error);
-      
-      if (retryCount < MAX_SAVE_RETRIES - 1) {
-        await new Promise(resolve => setTimeout(resolve, SAVE_RETRY_DELAY));
-        return savePopupContent(popupContent, retryCount + 1);
-      }
-      return false;
-    }
-  };
+  const { data: campaigns, isLoading: isLoadingCampaigns } = useEmailCampaigns(brand.id);
 
   const handleCardClick = async () => {
     setIsLoading(true);
     try {
-      console.log('Crawling website:', brand.website);
-      const result = await FirecrawlService.crawlWebsite(brand.website);
+      // Construct the Milled.com URL for the brand
+      const milledUrl = `https://milled.com/${brand.name.toLowerCase().replace(/\s+/g, '')}`;
+      console.log('Crawling website:', milledUrl);
+      
+      const result = await FirecrawlService.crawlWebsite(milledUrl);
       
       if (!result.success) {
         toast({
           title: "Error",
-          description: 'error' in result ? result.error : "Failed to fetch popup content",
+          description: 'error' in result ? result.error : "Failed to fetch email campaigns",
           variant: "destructive"
         });
         return;
       }
 
-      const popupContent = (Array.isArray(result.data) ? result.data : [result.data]) as unknown as Json[];
+      // Save the screenshot as an email campaign
+      const { error: upsertError } = await supabase
+        .from('email_campaigns')
+        .insert({
+          brand_id: brand.id,
+          screenshot_url: result.data[0].image,
+          subject_line: `Latest campaign from ${brand.name}`,
+          campaign_date: new Date().toISOString()
+        });
 
-      console.log('Saving popup content:', popupContent);
-
-      const savedSuccessfully = await savePopupContent(popupContent);
-
-      if (!savedSuccessfully) {
+      if (upsertError) {
+        console.error('Error saving email campaign:', upsertError);
         toast({
           title: "Error",
-          description: "Failed to save popup content after multiple attempts",
+          description: "Failed to save email campaign",
           variant: "destructive"
         });
         return;
@@ -94,13 +60,13 @@ const BrandCard = ({ brand }: BrandCardProps) => {
 
       toast({
         title: "Success",
-        description: `Successfully crawled and saved ${popupContent.length} popups`,
+        description: "Successfully captured email campaign",
       });
     } catch (error) {
       console.error('Error crawling website:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch popup content",
+        description: "Failed to fetch email campaign",
         variant: "destructive"
       });
     } finally {
@@ -108,14 +74,8 @@ const BrandCard = ({ brand }: BrandCardProps) => {
     }
   };
 
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  const handleImageError = () => {
     console.error(`Failed to load image for brand: ${brand.name}`);
-    console.error('Image error details:', {
-      src: e.currentTarget.src,
-      naturalWidth: e.currentTarget.naturalWidth,
-      naturalHeight: e.currentTarget.naturalHeight,
-      error: e
-    });
     setImageError(true);
   };
 
@@ -161,10 +121,10 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         </CardContent>
       </Card>
 
-      <PopupViewer 
+      <EmailCampaignViewer 
         brandId={brand.id}
-        popups={popups || []}
-        isLoading={isLoadingPopups}
+        campaigns={campaigns || []}
+        isLoading={isLoadingCampaigns}
       />
     </div>
   );
