@@ -23,40 +23,25 @@ const BrandCard = ({ brand }: BrandCardProps) => {
   const { data: campaigns, isLoading: isLoadingCampaigns } = useEmailCampaigns(brand.id);
 
   const handleCardClick = async () => {
+    if (isLoading) return; // Prevent multiple simultaneous requests
+    
     setIsLoading(true);
     try {
-      // Format brand name for Milled.com URL (lowercase, remove spaces and special chars)
-      const formattedBrandName = brand.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '')
-        .trim();
+      // Format brand name for Milled.com URL
+      const formattedBrandName = encodeURIComponent(
+        brand.name.toLowerCase()
+          .replace(/[^a-z0-9]/g, '')
+          .trim()
+      );
       
-      // Construct the proper Milled.com URL
+      // Use Milled.com search URL
       const milledUrl = `https://milled.com/search/${formattedBrandName}`;
-      console.log(`Attempting to fetch email campaigns for ${brand.name} (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
-      
+      console.log(`[${brand.name}] Attempt ${retryCount + 1}/${MAX_RETRIES} - Fetching from: ${milledUrl}`);
+
       const result = await FirecrawlService.crawlWebsite(milledUrl);
       
       if (!result.success) {
-        console.error('Failed to fetch email campaigns:', 'error' in result ? result.error : 'Unknown error');
-        
-        // Check if we should retry
-        if (retryCount < MAX_RETRIES) {
-          setRetryCount(prev => prev + 1);
-          toast({
-            title: "Retrying...",
-            description: `Attempt ${retryCount + 1} of ${MAX_RETRIES}`,
-          });
-          handleCardClick(); // Recursive retry
-          return;
-        }
-        
-        toast({
-          title: "Error",
-          description: 'error' in result ? result.error : "Failed to fetch email campaigns",
-          variant: "destructive"
-        });
-        return;
+        throw new Error('error' in result ? result.error : 'Failed to fetch email campaigns');
       }
 
       // Reset retry count on success
@@ -73,13 +58,7 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         });
 
       if (upsertError) {
-        console.error('Error saving email campaign:', upsertError);
-        toast({
-          title: "Error",
-          description: "Failed to save email campaign",
-          variant: "destructive"
-        });
-        return;
+        throw upsertError;
       }
 
       toast({
@@ -87,22 +66,21 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         description: "Successfully captured email campaign",
       });
     } catch (error) {
-      console.error('Error processing email campaigns:', error);
+      console.error(`[${brand.name}] Error:`, error);
       
-      // Check if we should retry on network errors
-      if (error instanceof Error && error.message.includes('Failed to fetch') && retryCount < MAX_RETRIES) {
+      if (retryCount < MAX_RETRIES) {
         setRetryCount(prev => prev + 1);
         toast({
-          title: "Network error",
-          description: `Retrying... Attempt ${retryCount + 1} of ${MAX_RETRIES}`,
+          title: "Retrying...",
+          description: `Attempt ${retryCount + 1} of ${MAX_RETRIES}`,
         });
-        setTimeout(() => handleCardClick(), 1000); // Retry after 1 second
+        setTimeout(() => handleCardClick(), 2000); // Retry after 2 seconds
         return;
       }
       
       toast({
         title: "Error",
-        description: "Failed to process email campaigns",
+        description: "Failed to process email campaigns after multiple attempts",
         variant: "destructive"
       });
     } finally {
