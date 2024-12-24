@@ -17,6 +17,8 @@ const BrandCard = ({ brand }: BrandCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
   
   const { data: campaigns, isLoading: isLoadingCampaigns } = useEmailCampaigns(brand.id);
 
@@ -26,17 +28,29 @@ const BrandCard = ({ brand }: BrandCardProps) => {
       // Format brand name for Milled.com URL (lowercase, remove spaces and special chars)
       const formattedBrandName = brand.name
         .toLowerCase()
-        .replace(/[^a-z0-9]/g, '') // Remove any non-alphanumeric characters
+        .replace(/[^a-z0-9]/g, '')
         .trim();
       
       // Construct the proper Milled.com URL
       const milledUrl = `https://milled.com/search/${formattedBrandName}`;
-      console.log('Fetching email campaigns from:', milledUrl);
+      console.log(`Attempting to fetch email campaigns for ${brand.name} (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
       
       const result = await FirecrawlService.crawlWebsite(milledUrl);
       
       if (!result.success) {
         console.error('Failed to fetch email campaigns:', 'error' in result ? result.error : 'Unknown error');
+        
+        // Check if we should retry
+        if (retryCount < MAX_RETRIES) {
+          setRetryCount(prev => prev + 1);
+          toast({
+            title: "Retrying...",
+            description: `Attempt ${retryCount + 1} of ${MAX_RETRIES}`,
+          });
+          handleCardClick(); // Recursive retry
+          return;
+        }
+        
         toast({
           title: "Error",
           description: 'error' in result ? result.error : "Failed to fetch email campaigns",
@@ -44,6 +58,9 @@ const BrandCard = ({ brand }: BrandCardProps) => {
         });
         return;
       }
+
+      // Reset retry count on success
+      setRetryCount(0);
 
       // Save the screenshot as an email campaign
       const { error: upsertError } = await supabase
@@ -71,6 +88,18 @@ const BrandCard = ({ brand }: BrandCardProps) => {
       });
     } catch (error) {
       console.error('Error processing email campaigns:', error);
+      
+      // Check if we should retry on network errors
+      if (error instanceof Error && error.message.includes('Failed to fetch') && retryCount < MAX_RETRIES) {
+        setRetryCount(prev => prev + 1);
+        toast({
+          title: "Network error",
+          description: `Retrying... Attempt ${retryCount + 1} of ${MAX_RETRIES}`,
+        });
+        setTimeout(() => handleCardClick(), 1000); // Retry after 1 second
+        return;
+      }
+      
       toast({
         title: "Error",
         description: "Failed to process email campaigns",
