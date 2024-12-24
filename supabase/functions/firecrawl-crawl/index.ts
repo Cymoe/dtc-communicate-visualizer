@@ -19,62 +19,40 @@ serve(async (req) => {
       throw new Error('Screenshot API key not configured')
     }
 
-    // Take multiple screenshots with different delays to increase chances of capturing popups
-    const delays = [0, 100, 200]
-    const screenshots = []
+    // Configure screenshot API parameters
+    const params = new URLSearchParams({
+      url: url,
+      access_key: screenshotApiKey,
+      full_page: 'true',
+      format: 'jpeg',
+      block_ads: 'true',
+      block_cookie_banners: 'true',
+      viewport_width: '1920',
+      viewport_height: '1080',
+      wait_for: '.email-content', // Wait for Milled.com's email content to load
+      timeout: '30'
+    })
 
-    for (const delay of delays) {
-      const params = new URLSearchParams({
-        url: url,
-        access_key: screenshotApiKey,
-        full_page: 'true',
-        format: 'jpeg',
-        block_ads: 'true',
-        block_cookie_banners: 'true',
-        delay: delay.toString(),
-        viewport_width: '1920',
-        viewport_height: '1080',
-        response_type: 'json',
-        timeout: '30'
-      })
-
-      console.log(`Making screenshot request with delay ${delay}ms:`, params.toString())
-      
-      try {
-        const response = await fetch(`https://api.screenshotone.com/take?${params}`)
-        if (!response.ok) {
-          console.error(`Screenshot failed for delay ${delay}ms:`, await response.text())
-          continue
-        }
-
-        const result = await response.json()
-        screenshots.push(result)
-        console.log(`Successfully captured screenshot with ${delay}ms delay`)
-      } catch (error) {
-        console.error(`Error capturing screenshot with ${delay}ms delay:`, error)
-      }
-    }
-
-    if (screenshots.length === 0) {
-      throw new Error('Failed to capture any screenshots')
-    }
-
-    // Use the last successful screenshot
-    const lastScreenshot = screenshots[screenshots.length - 1]
+    console.log('Making screenshot request to API:', url)
     
-    const popupData = {
-      title: `Popup from ${url}`,
-      description: 'Captured popup content',
-      cta: 'View Details',
-      image: lastScreenshot.url || lastScreenshot.image,
-      backgroundColor: '#ffffff',
-      textColor: '#000000'
+    const response = await fetch(`https://api.screenshotone.com/take?${params}`)
+    if (!response.ok) {
+      console.error('Screenshot API error:', await response.text())
+      throw new Error('Failed to capture screenshot')
     }
+
+    const result = await response.json()
+    console.log('Screenshot captured successfully:', result)
 
     return new Response(
       JSON.stringify({
         success: true,
-        data: [popupData]
+        data: [{
+          title: 'Milled.com Email Campaign',
+          image: result.url || result.image,
+          backgroundColor: '#ffffff',
+          textColor: '#000000'
+        }]
       }),
       { 
         headers: { 
